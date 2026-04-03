@@ -154,10 +154,11 @@
 
   /* ---- STAT CARDS ---- */
   .stats-row {
-    display: grid; grid-template-columns: repeat(4, 1fr);
+    display: grid; grid-template-columns: repeat(5, 1fr);
     gap: 16px; margin-bottom: 32px;
   }
-  @media (max-width: 780px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 960px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 600px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 
   .stat-card {
     background: var(--surface); border-radius: var(--radius);
@@ -789,6 +790,7 @@
         <div class="legend-item"><div class="legend-dot" style="background:var(--error)"></div> Cache writes</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--chart-5)"></div> Cache reads</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--chart-3)"></div> Output</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> 7-day avg</div>
       </div>
     </div>
     <div class="chart-card">
@@ -846,6 +848,7 @@
             <th data-sort="prompt">What you asked</th>
             <th data-sort="model" class="has-tooltip has-tooltip-below">Model<div class="tooltip">Which AI model was used. Opus is the most capable (and uses more tokens), Sonnet is faster and lighter.</div></th>
             <th data-sort="queries" style="text-align:right" class="has-tooltip has-tooltip-below">Messages<div class="tooltip">How many back-and-forth messages happened in this conversation, including automatic tool calls Claude made.</div></th>
+            <th data-sort="duration" style="text-align:right" class="has-tooltip has-tooltip-below">Duration<div class="tooltip">Time from first to last message in this conversation.</div></th>
             <th data-sort="total" style="text-align:right" class="sorted has-tooltip has-tooltip-below">Total tokens<div class="tooltip">The total number of tokens used in this conversation. Higher means more expensive. Long conversations cost more because Claude re-reads everything each turn.</div></th>
             <th data-sort="input" style="text-align:right" class="has-tooltip has-tooltip-below">Read<div class="tooltip">Tokens Claude read: your messages, the conversation history, files, and system context. This grows with each message because the full history gets re-sent.</div></th>
             <th data-sort="output" style="text-align:right" class="has-tooltip has-tooltip-below">Written<div class="tooltip">Tokens Claude wrote back: responses, code, explanations. Usually a small fraction of the total.</div></th>
@@ -1144,6 +1147,9 @@ function renderStats() {
       tip: 'Every time you hit Enter and send something to Claude, that is one message. This includes follow-up tool calls Claude makes automatically behind the scenes.' },
     { label: 'Cache Hit Rate', value: `${((t.cacheHitRate || 0) * 100).toFixed(0)}%`, sub: `${fmt(t.totalCacheReadTokens || 0)} tokens served from cache`,
       tip: 'The percentage of input tokens that were served from cache instead of being processed fresh. Higher is better -- cached tokens are 10x cheaper and help you stay under rate limits.' },
+    { label: 'Projected monthly', value: DATA.forecast ? '$' + DATA.forecast.projectedMonthlyCost.toFixed(2) : '$0.00',
+      sub: DATA.forecast ? 'Based on $' + DATA.forecast.avgDailyCost.toFixed(2) + '/day over ' + DATA.forecast.daysOfData + ' days' : 'No data',
+      tip: 'API-equivalent monthly projection based on daily average. You don\'t pay this on a subscription plan.' },
   ];
 
   document.getElementById('statsRow').innerHTML = cards.map((c, i) => `
@@ -1265,6 +1271,24 @@ function renderDailyChart() {
       y -= freshH;
     }
   });
+
+  // 7-day moving average line
+  if (data.length >= 7) {
+    ctx.beginPath();
+    ctx.strokeStyle = cssVar('--accent');
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+
+    for (let i = 0; i < data.length; i++) {
+      const windowStart = Math.max(0, i - 6);
+      const window = data.slice(windowStart, i + 1);
+      const avg = window.reduce((s, d) => s + d.totalTokens, 0) / window.length;
+      const x = startX + i * (barW + gap) + barW / 2;
+      const y = chartH + 8 - (avg / maxTotal) * chartH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
 
   // X labels
   ctx.fillStyle = colGrid; ctx.textAlign = 'center';
@@ -1479,6 +1503,12 @@ function renderTopPrompts() {
   }).join('');
 }
 
+function formatDuration(mins) {
+  if (!mins || mins === 0) return '-';
+  if (mins >= 60) return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
+  return mins + 'm';
+}
+
 // Sessions
 function renderSessions() {
   let sessions = [...DATA.sessions];
@@ -1496,6 +1526,7 @@ function renderSessions() {
     prompt: (a, b) => a.firstPrompt.localeCompare(b.firstPrompt),
     model: (a, b) => a.model.localeCompare(b.model),
     queries: (a, b) => a.queryCount - b.queryCount,
+    duration: (a, b) => (a.durationMinutes || 0) - (b.durationMinutes || 0),
     total: (a, b) => a.totalTokens - b.totalTokens,
     input: (a, b) => a.inputTokens - b.inputTokens,
     output: (a, b) => a.outputTokens - b.outputTokens,
@@ -1514,6 +1545,7 @@ function renderSessions() {
       <td><div class="prompt-preview" title="${escapeHtml(s.firstPrompt)}">${escapeHtml(s.firstPrompt)}</div></td>
       <td><span class="model-badge ${modelClass(s.model)}"><span class="model-dot"></span>${modelShort(s.model)}</span></td>
       <td class="token-num">${s.queryCount}</td>
+      <td class="token-num">${formatDuration(s.durationMinutes)}</td>
       <td class="token-num" style="font-weight:700">${fmt(s.totalTokens)}</td>
       <td class="token-num">${fmt(s.inputTokens)}</td>
       <td class="token-num">${fmt(s.outputTokens)}</td>

@@ -234,6 +234,7 @@ async function parseAllSessions({ from, to } = {}) {
         cacheReadTokens,
         totalTokens,
         cost,
+        durationMinutes: computeSessionDuration({ queries }),
       });
     }
   }
@@ -442,6 +443,8 @@ async function parseAllSessions({ from, to } = {}) {
   // Generate insights
   const insights = generateInsights(filteredSessions, allPrompts, grandTotals);
 
+  const forecast = computeForecast(dailyUsage);
+
   return {
     sessions: filteredSessions,
     dailyUsage,
@@ -449,6 +452,7 @@ async function parseAllSessions({ from, to } = {}) {
     projectBreakdown,
     topPrompts,
     totals: grandTotals,
+    forecast,
     insights,
     warnings,
   };
@@ -719,4 +723,25 @@ function fmt(n) {
   return n.toLocaleString();
 }
 
-module.exports = { parseAllSessions, parseJSONLFile, extractSessionData, filterSessionsByDateRange };
+function computeSessionDuration(session) {
+  const timestamps = session.queries
+    .map(q => q.assistantTimestamp || q.userTimestamp)
+    .filter(Boolean)
+    .map(t => new Date(t).getTime())
+    .filter(t => !isNaN(t));
+  if (timestamps.length < 2) return 0;
+  return Math.round((Math.max(...timestamps) - Math.min(...timestamps)) / 60000);
+}
+
+function computeForecast(dailyUsage) {
+  if (!dailyUsage.length) return { projectedMonthlyCost: 0, avgDailyCost: 0, daysOfData: 0 };
+  const totalCost = dailyUsage.reduce((s, d) => s + d.cost, 0);
+  const avgDailyCost = totalCost / dailyUsage.length;
+  return {
+    projectedMonthlyCost: avgDailyCost * 30,
+    avgDailyCost,
+    daysOfData: dailyUsage.length,
+  };
+}
+
+module.exports = { parseAllSessions, parseJSONLFile, extractSessionData, filterSessionsByDateRange, computeSessionDuration, computeForecast };
