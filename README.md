@@ -1,51 +1,51 @@
-# @mpalermiti/claude-spend
+# claude-spend
 
-See where your Claude Code tokens go. One command, zero setup.
+I hit Claude Code token limits daily and had no idea where the tokens were going. So I forked [Aniket Parihar's claude-spend](https://github.com/writetoaniketparihar-collab/claude-spend) and rebuilt it into something I'd actually use.
 
-Parses your local `~/.claude/` session data and serves a dashboard with token usage analytics, cost estimates, date filtering, and actionable insights.
-
-## Quick Start
+One command. Local dashboard. No setup.
 
 ```bash
 npx @mpalermiti/claude-spend
 ```
 
-Opens a local dashboard at `http://localhost:3456`. All data stays on your machine.
+<!-- screenshot goes here -->
 
-## Features
+## What it does
 
-- **Date range filtering** -- Lifetime, This Month, Last Month, This Week, Last Week, Today, or custom range
-- **Cost forecasting** -- Projected monthly spend based on daily averages
-- **7-day moving average** -- Trend line overlaid on daily usage chart
-- **Session duration** -- How long each conversation lasted
-- **Tool usage analytics** -- Which tools (Read, Edit, Bash, Grep, Agent) are called most
-- **Per-session drill-down** -- Turn-by-turn cost curve, context growth, token breakdown
-- **12 insights** -- Actionable suggestions: vague prompts, context growth, marathon sessions, model mismatch, and more
-- **Dark mode** -- Toggle or auto-detect from system preference
-- **MCP server** -- Query spend data programmatically from Claude or any MCP client
-- **Share card** -- Generate a PNG summary of your stats
+Reads your local Claude Code session data (`~/.claude/`) and shows you exactly where your tokens go. Everything runs locally. Nothing leaves your machine.
 
-## CLI Options
+**The dashboard gives you:**
 
-```
-npx @mpalermiti/claude-spend [options]
+- Token usage over time with a 7-day moving average
+- Cost forecasting based on your lifetime daily average
+- Per-session drill-downs with turn-by-turn cost curves and context growth
+- Tool usage breakdown (which tools Claude calls most)
+- 12 actionable insights (vague prompts, marathon sessions, model mismatch, etc.)
+- Date filtering: lifetime, this month, last month, this week, last week, today, or custom range
+- Dark mode
 
-Options:
-  --port <port>   Port for dashboard (default: 3456)
-  --no-open       Don't auto-open browser
-  --mcp           Run as MCP server (stdio transport)
-  --help, -h      Show help
-```
+**The MCP server** lets Claude query its own spend mid-conversation. "What's my burn today?" just works.
 
-## MCP Server
-
-Run as an MCP server so Claude can query your spend data mid-conversation:
+## Install
 
 ```bash
-npx @mpalermiti/claude-spend --mcp
+npx @mpalermiti/claude-spend
 ```
 
-Add to your Claude Code settings (`~/.claude/settings.json`):
+Opens `http://localhost:3456`. That's it.
+
+**CLI flags:**
+
+```
+--port <port>   Custom port (default: 3456)
+--no-open       Don't auto-open browser
+--mcp           Run as MCP server (stdio)
+--help          Show help
+```
+
+## MCP server
+
+Add this to `~/.claude/settings.json` and Claude can query spend data during any conversation:
 
 ```json
 {
@@ -58,22 +58,12 @@ Add to your Claude Code settings (`~/.claude/settings.json`):
 }
 ```
 
-**Available tools:**
+Five tools: `get_spend_summary`, `get_top_sessions`, `get_project_breakdown`, `get_insights`, `get_daily_trend`. All accept optional `from`/`to` date params.
 
-| Tool | Description |
-|------|-------------|
-| `get_spend_summary` | Token usage and cost totals for a time period |
-| `get_top_sessions` | Most expensive sessions, filterable by project/date |
-| `get_project_breakdown` | Per-project token and cost breakdown |
-| `get_insights` | Generated insights about usage patterns |
-| `get_daily_trend` | Daily usage data for trend analysis |
+## How it works
 
-All tools accept optional `from` and `to` parameters (YYYY-MM-DD).
+Claude Code writes JSONL session files to `~/.claude/projects/`. This tool parses them, calculates API-equivalent costs per model, aggregates by day/model/project, and generates insights. The cost numbers represent what the usage would cost at API rates (not what you pay on a subscription).
 
-## How It Works
+## Origin
 
-Reads JSONL session files from `~/.claude/projects/` -- the same data Claude Code writes locally. Parses token counts, calculates API-equivalent costs, aggregates by day/model/project, and generates insights. Nothing is sent anywhere.
-
-## Credits
-
-Forked from [claude-spend](https://github.com/writetoaniketparihar-collab/claude-spend) by Aniket Parihar. MIT License.
+Forked from [claude-spend](https://github.com/writetoaniketparihar-collab/claude-spend) by Aniket Parihar. I kept the core parser, then rebuilt the dashboard, added date filtering, analytics, MCP server, and dark mode. MIT license.
