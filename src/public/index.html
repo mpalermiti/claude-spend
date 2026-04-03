@@ -1698,7 +1698,7 @@ function renderTurnCostChart(grouped) {
   const maxCost = Math.max(...costs);
   if (maxCost <= 0) { wrap.style.display = 'none'; return; }
 
-  const padL = 52, padR = 16, padT = 12, padB = 28;
+  const padL = 52, padR = 48, padT = 12, padB = 28;
   const chartW = w - padL - padR;
   const chartH = h - padT - padB;
 
@@ -1800,6 +1800,39 @@ function renderTurnCostChart(grouped) {
     }
   }
 
+  // Cumulative context growth (secondary axis, right side)
+  let cumulative = 0;
+  const cumulativeData = grouped.map(g => {
+    cumulative += g.inputTokens + (g.cacheReadTokens || 0);
+    return cumulative;
+  });
+  const maxCumulative = Math.max(...cumulativeData);
+
+  if (maxCumulative > 0) {
+    // Right axis labels
+    ctx.fillStyle = cssVar('--text-tertiary');
+    ctx.textAlign = 'left';
+    ctx.font = '500 10px Inter, system-ui';
+    for (let i = 0; i <= 3; i++) {
+      const val = (maxCumulative / 3) * i;
+      const y = padT + chartH - (chartH * i / 3);
+      ctx.fillText(fmt(Math.round(val)), w - padR + 4, y + 3);
+    }
+
+    // Context growth line
+    ctx.beginPath();
+    ctx.strokeStyle = cssVar('--chart-3');
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    cumulativeData.forEach((c, i) => {
+      const x = padL + i * stepX;
+      const y = padT + chartH - (c / maxCumulative) * chartH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
   // X labels
   ctx.fillStyle = colGrid;
   ctx.font = '500 10px Inter, system-ui';
@@ -1868,8 +1901,14 @@ function openDrilldown(sessionId) {
   if (!session) return;
 
   document.getElementById('drilldownTitle').textContent = session.firstPrompt.substring(0, 140);
+  const duration = session.durationMinutes;
+  const durationStr = duration > 0
+    ? (duration >= 60 ? Math.floor(duration / 60) + 'h ' + (duration % 60) + 'm' : duration + 'm')
+    : '';
   document.getElementById('drilldownMeta').textContent =
-    `${formatDate(session.date)} \u00B7 ${modelShort(session.model)} \u00B7 ${session.queryCount} messages \u00B7 ${fmt(session.totalTokens)} tokens`;
+    formatDate(session.date) + ' \u00B7 ' + modelShort(session.model) +
+    ' \u00B7 ' + session.queryCount + ' messages \u00B7 ' + fmt(session.totalTokens) + ' tokens' +
+    (durationStr ? ' \u00B7 ' + durationStr : '');
 
   const grouped = groupSessionQueries(session.queries);
 
@@ -1883,15 +1922,32 @@ function openDrilldown(sessionId) {
   // Session recommendation (always shown)
   renderDrilldownInsight(grouped, session);
 
+  let runningContext = 0;
   document.getElementById('queryList').innerHTML = grouped.map((q, i) => {
+    runningContext += q.inputTokens + (q.cacheReadTokens || 0);
     const cont = q.continuations > 0 ? ` + ${q.continuations} tool uses` : '';
     const cached = q.cacheReadTokens || 0;
+    const contextLabel = 'Context: ' + fmt(runningContext);
+
+    // Per-turn token breakdown bar
+    const freshIn = q.inputTokens + (q.cacheCreationTokens || 0);
+    const totalBar = freshIn + cached + q.outputTokens;
+    const freshPct = totalBar > 0 ? (freshIn / totalBar * 100) : 0;
+    const cachePct = totalBar > 0 ? (cached / totalBar * 100) : 0;
+    const outPct = totalBar > 0 ? (q.outputTokens / totalBar * 100) : 0;
+
     return `<div class="query-item">
       <div class="query-num">${i + 1}</div>
       <div class="query-prompt">${escapeHtml(q.prompt.substring(0, 500))}</div>
       <div class="query-tokens-col">
         <div class="total">${fmt(q.totalTokens)}</div>
         <div class="detail">${fmt(q.inputTokens)} in / ${fmt(cached)} cached / ${fmt(q.outputTokens)} out${cont}</div>
+        <div class="detail" style="color:var(--chart-3)">${contextLabel}</div>
+        <div class="token-bar-wrap" style="width:100%;margin-top:6px">
+          <div class="token-bar-in" style="width:${freshPct}%"></div>
+          <div class="token-bar-cache" style="width:${cachePct}%"></div>
+          <div class="token-bar-out" style="width:${outPct}%"></div>
+        </div>
       </div>
     </div>`;
   }).join('');
