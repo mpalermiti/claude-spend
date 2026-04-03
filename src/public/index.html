@@ -2074,35 +2074,46 @@ async function generateShareCard() {
   const W = 1200, H = 630;
   canvas.width = W; canvas.height = H;
 
-  // Background — matches dark theme
-  ctx.fillStyle = '#09090B';
+  // Read current theme colors from CSS
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const bg = isDark ? '#09090B' : '#F5F5F3';
+  const surface = isDark ? '#111113' : '#FFFFFF';
+  const borderColor = isDark ? '#1F1F23' : '#E8E8E6';
+  const textPrimary = isDark ? '#EAEAEA' : '#1A1A1A';
+  const textMuted = isDark ? '#5A5A5A' : '#9C9C9C';
+  const accent = '#0EA5E9';
+  const dotColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+  const glowColor = isDark ? 'rgba(14,165,233,0.08)' : 'rgba(14,165,233,0.06)';
+
+  // Background
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
   // Dot grid
-  ctx.fillStyle = 'rgba(255,255,255,0.04)';
-  for (let x = 0; x < W; x += 24) {
-    for (let y = 0; y < H; y += 24) {
+  ctx.fillStyle = dotColor;
+  for (let dx = 0; dx < W; dx += 24) {
+    for (let dy = 0; dy < H; dy += 24) {
       ctx.beginPath();
-      ctx.arc(x, y, 0.8, 0, Math.PI * 2);
+      ctx.arc(dx, dy, 0.8, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
   // Accent glow (top)
   const glow = ctx.createRadialGradient(W / 2, 0, 0, W / 2, 0, 500);
-  glow.addColorStop(0, 'rgba(14,165,233,0.08)');
+  glow.addColorStop(0, glowColor);
   glow.addColorStop(1, 'transparent');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
 
   // Title — mono, cyan
-  ctx.fillStyle = '#0EA5E9';
+  ctx.fillStyle = accent;
   ctx.font = '600 20px "JetBrains Mono", monospace';
   ctx.fillText('claude-spend', 60, 60);
 
   // Date range
   if (t.dateRange) {
-    ctx.fillStyle = '#5A5A5A';
+    ctx.fillStyle = textMuted;
     ctx.font = '400 14px "JetBrains Mono", monospace';
     ctx.fillText(t.dateRange.from + ' \u2014 ' + t.dateRange.to, 60, 88);
   }
@@ -2126,25 +2137,25 @@ async function generateShareCard() {
     const y = gridY + row * (cellH + 16);
 
     // Card
-    ctx.fillStyle = '#111113';
+    ctx.fillStyle = surface;
     ctx.beginPath();
     roundedRect(ctx, x, y, cellW, cellH, 10);
     ctx.fill();
 
     // Border
-    ctx.strokeStyle = '#1F1F23';
+    ctx.strokeStyle = borderColor;
     ctx.lineWidth = 1;
     ctx.beginPath();
     roundedRect(ctx, x, y, cellW, cellH, 10);
     ctx.stroke();
 
     // Label
-    ctx.fillStyle = '#5A5A5A';
+    ctx.fillStyle = textMuted;
     ctx.font = '500 12px "JetBrains Mono", monospace';
     ctx.fillText(s.label, x + 24, y + 36);
 
     // Value — cyan
-    ctx.fillStyle = '#0EA5E9';
+    ctx.fillStyle = accent;
     ctx.font = '700 44px "JetBrains Mono", monospace';
     ctx.fillText(s.value, x + 24, y + 96);
   });
@@ -2153,18 +2164,17 @@ async function generateShareCard() {
   const insights = DATA.insights || [];
   if (insights.length > 0) {
     const insightY = gridY + 2 * (cellH + 16) + 20;
-    ctx.fillStyle = '#5A5A5A';
+    ctx.fillStyle = textMuted;
     ctx.font = '400 13px "Outfit", system-ui';
     wrapText(ctx, insights[0].title, 60, insightY, W - 120, 20);
   }
 
   // Footer
   const footerY = H - 40;
-  ctx.fillStyle = '#2A2A2E';
+  ctx.fillStyle = textMuted;
   ctx.font = '400 13px "JetBrains Mono", monospace';
   ctx.fillText('npx @mpalermiti/claude-spend', 60, footerY);
 
-  ctx.fillStyle = '#2A2A2E';
   ctx.textAlign = 'right';
   ctx.fillText('michaelp.ai', W - 60, footerY);
   ctx.textAlign = 'left';
