@@ -10,62 +10,72 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #F8F9FC;
-    --bg-mesh-1: #EEF0FF;
-    --bg-mesh-2: #F0FDFA;
-    --white: #FFFFFF;
-    --text: #0F172A;
-    --text-secondary: #475569;
-    --text-tertiary: #94A3B8;
-    --border: rgba(0,0,0,0.06);
-    --border-strong: rgba(0,0,0,0.1);
+    --bg: #FAFAFA;
+    --surface: #FFFFFF;
+    --surface-raised: #FFFFFF;
+    --text-primary: #111111;
+    --text-secondary: #666666;
+    --text-tertiary: #999999;
+    --border: #E5E5E5;
+    --border-strong: #D4D4D4;
 
-    --indigo: #6366F1;
-    --violet: #8B5CF6;
-    --purple: #A855F7;
-    --teal: #14B8A6;
-    --cyan: #06B6D4;
-    --emerald: #10B981;
-    --amber: #F59E0B;
-    --orange: #F97316;
-    --rose: #F43F5E;
-    --blue: #3B82F6;
+    --accent: #2563EB;
+    --accent-light: #EFF6FF;
+    --accent-muted: #93C5FD;
 
-    --gradient-main: linear-gradient(135deg, #6366F1, #8B5CF6, #A855F7);
-    --gradient-teal: linear-gradient(135deg, #14B8A6, #06B6D4);
-    --gradient-warm: linear-gradient(135deg, #F59E0B, #F97316);
-    --gradient-rose: linear-gradient(135deg, #F43F5E, #EC4899);
+    --success: #16A34A;
+    --warning: #CA8A04;
+    --error: #DC2626;
+
+    --chart-1: #2563EB;
+    --chart-2: #7C3AED;
+    --chart-3: #0891B2;
+    --chart-4: #059669;
+    --chart-5: #D97706;
 
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
-    --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
-    --shadow-glow: 0 0 40px rgba(99,102,241,0.15);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
 
-    --radius: 16px;
-    --radius-sm: 10px;
-    --radius-xs: 6px;
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 4px;
+    --font: 'Inter', -apple-system, system-ui, sans-serif;
+    --mono: 'SF Mono', 'Cascadia Code', 'JetBrains Mono', monospace;
+  }
+
+  [data-theme="dark"] {
+    --bg: #0A0A0A;
+    --surface: #141414;
+    --surface-raised: #1A1A1A;
+    --text-primary: #EEEEEE;
+    --text-secondary: #999999;
+    --text-tertiary: #666666;
+    --border: #262626;
+    --border-strong: #333333;
+    --accent-light: #1E293B;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0A0A0A;
+      --surface: #141414;
+      --surface-raised: #1A1A1A;
+      --text-primary: #EEEEEE;
+      --text-secondary: #999999;
+      --text-tertiary: #666666;
+      --border: #262626;
+      --border-strong: #333333;
+      --accent-light: #1E293B;
+    }
   }
 
   body {
     font-family: var(--font);
     background: var(--bg);
-    color: var(--text);
+    color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
-  }
-
-  /* Mesh gradient background */
-  body::before {
-    content: '';
-    position: fixed; top: 0; left: 0; right: 0; height: 600px;
-    background:
-      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(99,102,241,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 90% 10%, rgba(139,92,246,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse 50% 40% at 50% 20%, rgba(20,184,166,0.06) 0%, transparent 50%);
-    pointer-events: none; z-index: 0;
   }
 
   /* Loading */
@@ -75,7 +85,7 @@
   }
   .spinner {
     width: 36px; height: 36px;
-    border: 3px solid var(--border); border-top-color: var(--indigo);
+    border: 3px solid var(--border); border-top-color: var(--accent);
     border-radius: 50%; animation: spin 0.7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -101,32 +111,46 @@
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 40px; flex-wrap: wrap; gap: 16px;
   }
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .logo-mark {
-    width: 40px; height: 40px; border-radius: 12px;
-    background: var(--gradient-main);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 12px rgba(99,102,241,0.3);
-  }
-  .logo-mark svg { width: 22px; height: 22px; }
-  .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-  .header-right { display: flex; align-items: center; gap: 14px; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
   .date-range {
     color: var(--text-tertiary); font-size: 13px; font-weight: 500;
-    background: var(--white); padding: 6px 14px; border-radius: 20px;
+    background: var(--surface); padding: 6px 14px; border-radius: var(--radius-sm);
     border: 1px solid var(--border);
   }
   .refresh-btn {
-    background: var(--white); border: 1px solid var(--border);
-    color: var(--text-secondary); padding: 7px 16px; border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-secondary); padding: 7px 16px; border-radius: var(--radius-sm);
     cursor: pointer; font-size: 13px; font-weight: 500; font-family: var(--font);
     transition: all 0.2s; display: flex; align-items: center; gap: 6px;
   }
   .refresh-btn:hover {
-    border-color: var(--indigo); color: var(--indigo);
-    box-shadow: 0 2px 8px rgba(99,102,241,0.12);
+    border-color: var(--accent); color: var(--accent);
   }
   .refresh-btn svg { width: 14px; height: 14px; }
+
+  /* Theme toggle */
+  .theme-toggle {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-secondary); width: 36px; height: 36px;
+    border-radius: var(--radius-sm); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .theme-toggle:hover {
+    border-color: var(--accent); color: var(--accent);
+  }
+  .theme-toggle svg { width: 16px; height: 16px; }
+  /* Show sun in dark, moon in light */
+  .theme-toggle .icon-sun { display: none; }
+  .theme-toggle .icon-moon { display: block; }
+  [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+  [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+  }
 
   /* ---- STAT CARDS ---- */
   .stats-row {
@@ -136,24 +160,21 @@
   @media (max-width: 780px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 
   .stat-card {
-    background: var(--white); border-radius: var(--radius);
+    background: var(--surface); border-radius: var(--radius);
     padding: 24px; position: relative;
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s, transform 0.2s;
+    box-shadow: none;
+    transition: border-color 0.2s;
   }
-  .stat-card:hover { box-shadow: var(--shadow-md); }
-  .stat-card .accent-bar {
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  }
+  .stat-card:hover { border-color: var(--border-strong); }
   .stat-label {
-    font-size: 12px; font-weight: 600; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
+    font-size: 13px; font-weight: 500; color: var(--text-tertiary);
+    margin-bottom: 10px;
   }
   .stat-value {
-    font-size: 34px; font-weight: 800; letter-spacing: -2px;
+    font-family: var(--mono); font-size: 28px; font-weight: 700;
     line-height: 1; margin-bottom: 6px;
-    color: var(--text);
+    color: var(--text-primary);
   }
   .stat-sub { font-size: 13px; color: var(--text-tertiary); font-weight: 500; }
 
@@ -167,13 +188,13 @@
     bottom: calc(100% + 10px);
     left: 50%;
     transform: translateX(-50%);
-    background: var(--text);
-    color: #F8FAFC;
+    background: var(--text-primary);
+    color: var(--bg);
     font-size: 12px;
     font-weight: 500;
     line-height: 1.5;
     padding: 10px 14px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     white-space: normal;
     width: max-content;
     max-width: 280px;
@@ -182,9 +203,7 @@
     transition: opacity 0.15s, transform 0.15s;
     transform: translateX(-50%) translateY(4px);
     z-index: 100;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    text-transform: none;
-    letter-spacing: 0;
+    box-shadow: var(--shadow-md);
     text-align: left;
   }
   .has-tooltip .tooltip::after {
@@ -194,7 +213,7 @@
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: var(--text);
+    border-top-color: var(--text-primary);
   }
   .has-tooltip:hover .tooltip {
     opacity: 1;
@@ -209,7 +228,7 @@
     top: auto;
     bottom: 100%;
     border-top-color: transparent;
-    border-bottom-color: var(--text);
+    border-bottom-color: var(--text-primary);
   }
   /* Help icon next to labels */
   .help-icon {
@@ -219,7 +238,7 @@
     width: 15px;
     height: 15px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.06);
+    background: var(--border);
     color: var(--text-tertiary);
     font-size: 10px;
     font-weight: 700;
@@ -228,32 +247,25 @@
     flex-shrink: 0;
   }
 
-  /* Token explainer */
   /* ---- SECTION HEADINGS ---- */
   .section-header {
     display: flex; align-items: center; gap: 10px;
     margin-bottom: 16px;
   }
-  .section-icon {
-    width: 28px; height: 28px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .section-icon svg { width: 16px; height: 16px; }
   .section-title {
-    font-size: 16px; font-weight: 700; letter-spacing: -0.3px;
+    font-size: 14px; font-weight: 600;
   }
 
   /* ---- INSIGHTS ---- */
   .insights-section { margin-bottom: 32px; }
   .insight-card {
-    background: var(--white); border-radius: var(--radius-sm);
+    background: var(--surface); border-radius: var(--radius-sm);
     padding: 14px 20px; margin-bottom: 8px;
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-    cursor: pointer; transition: box-shadow 0.2s;
+    box-shadow: none;
+    cursor: pointer; transition: border-color 0.2s;
   }
-  .insight-card:hover { box-shadow: var(--shadow-md); }
+  .insight-card:hover { border-color: var(--border-strong); }
   .insight-top {
     display: flex; align-items: center; gap: 12px;
   }
@@ -264,14 +276,14 @@
   }
   .insight-card.expanded .insight-arrow { transform: rotate(180deg); }
   .insight-indicator {
-    width: 28px; height: 28px; border-radius: 8px;
+    width: 28px; height: 28px; border-radius: var(--radius-xs);
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; font-size: 14px;
   }
-  .insight-card.warning .insight-indicator { background: linear-gradient(135deg, #FEF3C7, #FDE68A); }
-  .insight-card.info .insight-indicator { background: linear-gradient(135deg, #E0E7FF, #C7D2FE); }
-  .insight-card.neutral .insight-indicator { background: linear-gradient(135deg, #F1F5F9, #E2E8F0); }
-  .insight-title { font-size: 14px; font-weight: 700; line-height: 1.4; }
+  .insight-card.warning .insight-indicator { background: var(--accent-light); }
+  .insight-card.info .insight-indicator { background: var(--accent-light); }
+  .insight-card.neutral .insight-indicator { background: var(--accent-light); }
+  .insight-title { font-size: 14px; font-weight: 600; line-height: 1.4; }
   .insight-oneliner { font-size: 13px; color: var(--text-secondary); margin-left: auto; white-space: nowrap; font-weight: 500; }
   .insight-expand {
     max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
@@ -284,7 +296,7 @@
   }
   .insight-action-tip {
     font-size: 13px; line-height: 1.6;
-    padding: 8px 0 0 40px; color: var(--indigo); font-weight: 600;
+    padding: 8px 0 0 40px; color: var(--accent); font-weight: 600;
   }
 
   /* ---- CHARTS ---- */
@@ -294,81 +306,14 @@
   }
   @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
 
-  /* How Tokens Work */
-  .how-tokens {
-    background: var(--white); border-radius: var(--radius);
-    padding: 0; border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm); margin-bottom: 32px;
-    overflow: hidden;
-  }
-  .how-tokens-toggle {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 24px; cursor: pointer; user-select: none;
-  }
-  .how-tokens-toggle:hover { background: rgba(0,0,0,0.015); }
-  .how-tokens-toggle h3 {
-    font-size: 13px; font-weight: 700; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.5px; margin: 0;
-  }
-  .how-tokens-arrow {
-    color: var(--text-tertiary); transition: transform 0.2s;
-  }
-  .how-tokens.expanded .how-tokens-arrow { transform: rotate(180deg); }
-  .how-tokens-body {
-    max-height: 0; overflow: hidden; transition: max-height 0.35s ease;
-    padding: 0 24px;
-  }
-  .how-tokens.expanded .how-tokens-body {
-    max-height: 800px; padding: 0 24px 24px;
-  }
-  .how-tokens-body p {
-    font-size: 13.5px; line-height: 1.7; color: var(--text-secondary); margin: 0 0 20px;
-  }
-  .how-tokens-example {
-    background: var(--bg); border-radius: 10px; padding: 18px 20px; margin-bottom: 20px;
-  }
-  .how-tokens-example-title {
-    font-size: 12px; font-weight: 700; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;
-  }
-  .how-tokens-step {
-    display: flex; align-items: baseline; gap: 10px;
-    padding: 6px 0; font-size: 13px; color: var(--text-secondary);
-  }
-  .step-label {
-    font-weight: 600; color: var(--text-primary); min-width: 80px; flex-shrink: 0;
-  }
-  .step-desc { flex: 1; }
-  .step-tokens { font-weight: 600; white-space: nowrap; }
-  .how-tokens-total {
-    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
-    font-size: 13px; font-weight: 600; color: var(--text-primary);
-  }
-  .how-tokens-types { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-  .how-tokens-type {
-    display: flex; align-items: flex-start; gap: 10px;
-    font-size: 13px; line-height: 1.6; color: var(--text-secondary);
-  }
-  .how-tokens-dot {
-    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
-  }
-  .how-tokens-tip {
-    background: linear-gradient(135deg, #EEF2FF, #E0E7FF); border-radius: 10px;
-    padding: 14px 18px; font-size: 13px; line-height: 1.6; color: var(--text-secondary);
-  }
-  .how-tokens-tip code {
-    background: rgba(99,102,241,0.1); padding: 2px 6px; border-radius: 4px;
-    font-size: 12px; font-weight: 600; color: var(--indigo);
-  }
-
   .chart-card {
-    background: var(--white); border-radius: var(--radius);
+    background: var(--surface); border-radius: var(--radius);
     padding: 24px; border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
   }
   .chart-card h3 {
-    font-size: 13px; font-weight: 700; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px;
+    font-size: 14px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 20px;
   }
   canvas { display: block; }
   .legend {
@@ -376,13 +321,13 @@
     font-size: 12px; font-weight: 500; color: var(--text-secondary);
   }
   .legend-item { display: flex; align-items: center; gap: 7px; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 4px; flex-shrink: 0; }
+  .legend-dot { width: 10px; height: 10px; border-radius: var(--radius-xs); flex-shrink: 0; }
 
   /* ---- TOP PROMPTS ---- */
   .top-prompts { margin-bottom: 32px; }
   .prompts-card {
-    background: var(--white); border-radius: var(--radius);
-    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); box-shadow: none;
     overflow: hidden;
   }
   .prompt-row {
@@ -392,15 +337,15 @@
     cursor: pointer; transition: background 0.15s;
   }
   .prompt-row:last-child { border-bottom: none; }
-  .prompt-row:hover { background: #FAFBFF; }
+  .prompt-row:hover { background: var(--accent-light); }
   .prompt-rank {
-    width: 28px; height: 28px; border-radius: 8px;
+    width: 28px; height: 28px; border-radius: var(--radius-sm);
     background: var(--bg); display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 700; color: var(--text-secondary);
   }
-  .prompt-row:nth-child(1) .prompt-rank { background: var(--gradient-main); color: white; }
-  .prompt-row:nth-child(2) .prompt-rank { background: var(--gradient-teal); color: white; }
-  .prompt-row:nth-child(3) .prompt-rank { background: var(--gradient-warm); color: white; }
+  .prompt-row:nth-child(1) .prompt-rank { background: var(--accent); color: white; }
+  .prompt-row:nth-child(2) .prompt-rank { background: var(--chart-3); color: white; }
+  .prompt-row:nth-child(3) .prompt-rank { background: var(--chart-5); color: white; }
   .prompt-text {
     font-size: 14px; font-weight: 500; line-height: 1.5;
     display: -webkit-box; -webkit-line-clamp: 2;
@@ -409,15 +354,14 @@
   .prompt-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; font-weight: 500; }
   .token-bar-wrap {
     display: flex; gap: 1px; height: 4px; margin-top: 8px;
-    border-radius: 4px; overflow: hidden;
+    border-radius: var(--radius-xs); overflow: hidden;
   }
-  .token-bar-in { background: var(--indigo); height: 100%; }
-  .token-bar-cache { background: var(--amber); height: 100%; }
-  .token-bar-out { background: var(--teal); height: 100%; }
+  .token-bar-in { background: var(--chart-1); height: 100%; }
+  .token-bar-cache { background: var(--chart-5); height: 100%; }
+  .token-bar-out { background: var(--chart-3); height: 100%; }
   .prompt-tokens { text-align: right; white-space: nowrap; padding-top: 2px; }
   .prompt-tokens .value {
     font-size: 16px; font-weight: 700; font-family: var(--mono);
-    letter-spacing: -0.5px;
   }
   .prompt-tokens .sub { font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-top: 2px; }
 
@@ -430,22 +374,22 @@
     color: var(--text-tertiary); transition: transform 0.25s ease; flex-shrink: 0;
   }
   .proj-row { cursor: pointer; }
-  .proj-row:hover td { background: #FAFBFF; }
+  .proj-row:hover td { background: var(--accent-light); }
   .proj-row.expanded .proj-chevron { transform: rotate(90deg); }
   .proj-drawer td { padding: 0; border-bottom: 1px solid var(--border); }
-  .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: #FAFBFC; }
+  .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: var(--bg); }
   .proj-drawer.open .proj-drawer-inner { max-height: 600px; }
   .proj-drawer-content { padding: 12px 16px 16px; }
   .drawer-prompt-list { display: flex; flex-direction: column; gap: 8px; }
   .drawer-prompt-row {
     display: grid; grid-template-columns: 24px 1fr auto;
     gap: 10px; padding: 10px 14px; align-items: start;
-    background: white; border: 1px solid var(--border); border-radius: 10px;
-    cursor: pointer; transition: box-shadow 0.15s;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    cursor: pointer; transition: border-color 0.15s;
   }
-  .drawer-prompt-row:hover { box-shadow: var(--shadow-md); }
+  .drawer-prompt-row:hover { border-color: var(--border-strong); }
   .drawer-rank {
-    width: 20px; height: 20px; border-radius: 6px;
+    width: 20px; height: 20px; border-radius: var(--radius-xs);
     background: var(--bg); display: flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 700; color: var(--text-secondary); flex-shrink: 0;
   }
@@ -457,7 +401,7 @@
   .drawer-prompt-meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 5px; }
   .tool-chip {
     background: var(--bg); border: 1px solid var(--border-strong);
-    padding: 1px 7px; border-radius: 6px; font-size: 10px; font-weight: 600;
+    padding: 1px 7px; border-radius: var(--radius-xs); font-size: 10px; font-weight: 600;
     color: var(--text-secondary); white-space: nowrap;
   }
   .drawer-tokens { text-align: right; white-space: nowrap; }
@@ -472,36 +416,36 @@
     margin-bottom: 14px; gap: 12px; flex-wrap: wrap;
   }
   .session-search {
-    background: var(--white); border: 1px solid var(--border);
-    color: var(--text); padding: 9px 16px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-primary); padding: 9px 16px; border-radius: var(--radius-sm);
     font-size: 14px; font-weight: 500; width: 300px; outline: none;
     font-family: var(--font); transition: all 0.2s;
   }
   .session-search::placeholder { color: var(--text-tertiary); }
-  .session-search:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+  .session-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
   .session-count { color: var(--text-tertiary); font-size: 13px; font-weight: 600; }
 
   .sessions-card {
-    background: var(--white); border-radius: var(--radius);
-    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); box-shadow: none;
     overflow: visible;
   }
   .sessions-table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .sessions-table th {
     text-align: left; padding: 12px 16px;
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.6px; color: var(--text-tertiary);
+    font-size: 12px; font-weight: 600;
+    color: var(--text-tertiary);
     border-bottom: 1px solid var(--border);
     cursor: pointer; user-select: none; white-space: nowrap;
-    background: #FAFBFC;
+    background: var(--bg);
   }
   .sessions-table th:hover { color: var(--text-secondary); }
-  .sessions-table th.sorted { color: var(--indigo); }
+  .sessions-table th.sorted { color: var(--accent); }
   .sessions-table td {
     padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle;
   }
   .sessions-table tbody tr { cursor: pointer; transition: background 0.1s; }
-  .sessions-table tbody tr:hover td { background: #FAFBFF; }
+  .sessions-table tbody tr:hover td { background: var(--accent-light); }
   .sessions-table tbody tr:last-child td { border-bottom: none; }
   .prompt-preview {
     max-width: 340px; overflow: hidden; text-overflow: ellipsis;
@@ -509,7 +453,7 @@
   }
   .token-num {
     font-family: var(--mono); font-size: 13px; font-weight: 600;
-    text-align: right; white-space: nowrap; letter-spacing: -0.3px;
+    text-align: right; white-space: nowrap;
   }
   .model-badge {
     display: inline-flex; align-items: center; gap: 5px;
@@ -517,17 +461,16 @@
     font-size: 12px; font-weight: 600;
     transition: box-shadow 0.15s;
   }
-  .model-badge:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
-  /* Contrast-corrected badge colors (WCAG AA compliant) */
-  .model-opus { background: #EEF2FF; color: #3730A3; }
-  .model-sonnet { background: #ECFDF5; color: #047857; }
-  .model-haiku { background: #FFF7ED; color: #C2410C; }
-  .model-unknown { background: #F1F5F9; color: #475569; }
+  .model-badge:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .model-opus { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+  .model-sonnet { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+  .model-haiku { background: color-mix(in srgb, var(--chart-5) 15%, transparent); color: var(--chart-5); }
+  .model-unknown { background: var(--accent-light); color: var(--text-secondary); }
   .model-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-  .model-opus .model-dot { background: #4F46E5; }
-  .model-sonnet .model-dot { background: #10B981; }
-  .model-haiku .model-dot { background: #F97316; }
-  /* Sub-line pills in project rows — compact variant */
+  .model-opus .model-dot { background: var(--accent); }
+  .model-sonnet .model-dot { background: var(--success); }
+  .model-haiku .model-dot { background: var(--chart-5); }
+  /* Sub-line pills in project rows -- compact variant */
   .model-pills {
     list-style: none; padding: 0; margin: 5px 0 0;
     display: flex; flex-wrap: wrap; gap: 4px;
@@ -542,7 +485,7 @@
     margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
     white-space: nowrap; border-width: 0;
   }
-  /* Inline ↓in ↑out token pair inside a model badge */
+  /* Inline token detail inside a model badge */
   .token-detail {
     display: inline-flex; align-items: center; gap: 2px;
     font-size: 10px; font-weight: 600; opacity: 0.9;
@@ -550,7 +493,7 @@
   /* Project name styled as path */
   .proj-name {
     font-weight: 600; font-size: 13px;
-    font-family: var(--mono); letter-spacing: -0.2px; color: var(--text);
+    font-family: var(--mono); color: var(--text-primary);
   }
   .date-cell { white-space: nowrap; color: var(--text-secondary); font-weight: 500; }
   .project-tag {
@@ -561,9 +504,9 @@
 
   /* ---- DRILLDOWN ---- */
   .drilldown {
-    background: var(--white); border-radius: var(--radius);
+    background: var(--surface); border-radius: var(--radius);
     padding: 28px; margin-bottom: 32px; display: none;
-    border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border); box-shadow: var(--shadow-md);
   }
   .drilldown.open { display: block; animation: fadeUp 0.3s ease-out; }
   .drilldown-header {
@@ -574,11 +517,11 @@
   .drilldown-meta { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; font-weight: 500; }
   .drilldown-close {
     background: var(--bg); border: none; color: var(--text-secondary);
-    width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+    width: 32px; height: 32px; border-radius: var(--radius-sm); cursor: pointer;
     font-size: 18px; display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; transition: all 0.15s;
   }
-  .drilldown-close:hover { background: #EEF2FF; color: var(--indigo); }
+  .drilldown-close:hover { background: var(--accent-light); color: var(--accent); }
 
   .query-list { display: flex; flex-direction: column; gap: 8px; }
   .query-item {
@@ -587,9 +530,9 @@
     background: var(--bg); align-items: start;
     transition: background 0.1s;
   }
-  .query-item:hover { background: #EEF2FF; }
+  .query-item:hover { background: var(--accent-light); }
   .query-num {
-    width: 28px; height: 28px; border-radius: 8px; background: var(--white);
+    width: 28px; height: 28px; border-radius: var(--radius-sm); background: var(--surface);
     border: 1px solid var(--border);
     font-size: 12px; font-weight: 700; color: var(--text-tertiary);
     display: flex; align-items: center; justify-content: center;
@@ -604,43 +547,23 @@
   .footer {
     text-align: center; padding: 24px;
     color: var(--text-tertiary); font-size: 13px; font-weight: 500;
+    line-height: 1.7;
   }
-  .footer a { color: var(--indigo); text-decoration: none; font-weight: 600; }
+  .footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
   .footer a:hover { text-decoration: underline; }
-
-  /* Privacy notice */
-  .privacy-notice {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    font-size: 13px; font-weight: 500; color: var(--text-secondary);
-    background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.1);
-    padding: 8px 16px; border-radius: 10px; margin-bottom: 20px;
-  }
-
-  /* Hero / value prop */
-  .hero-section {
-    text-align: center; margin-bottom: 36px; padding: 0 20px;
-  }
-  .hero-title {
-    font-size: 38px; font-weight: 800; letter-spacing: -1.5px;
-    background: var(--gradient-main); -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent; background-clip: text;
-    margin-bottom: 10px; line-height: 1.3;
-  }
-  .hero-subtitle {
-    font-size: 15px; color: var(--text-secondary); font-weight: 500;
-    max-width: 600px; margin: 0 auto; line-height: 1.7;
-  }
 
   /* Warnings banner */
   .warnings-banner {
-    background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px;
+    background: color-mix(in srgb, var(--warning) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warning) 25%, transparent);
+    border-radius: var(--radius-sm);
     padding: 10px 16px; margin-bottom: 16px; font-size: 13px;
-    color: #92400E; line-height: 1.6; display: none;
+    color: var(--warning); line-height: 1.6; display: none;
   }
   .warnings-banner.visible { display: block; }
   .warnings-banner .warn-close {
     float: right; background: none; border: none; cursor: pointer;
-    font-size: 16px; color: #92400E; padding: 0 4px; margin-left: 8px;
+    font-size: 16px; color: var(--warning); padding: 0 4px; margin-left: 8px;
     opacity: 0.6; transition: opacity 0.15s;
   }
   .warnings-banner .warn-close:hover { opacity: 1; }
@@ -655,23 +578,68 @@
   }
   .share-overlay.open { display: flex; }
   .share-modal {
-    background: var(--white); border-radius: var(--radius); padding: 24px;
-    max-width: 680px; width: 90%; box-shadow: var(--shadow-lg);
+    background: var(--surface); border-radius: var(--radius); padding: 24px;
+    max-width: 680px; width: 90%; box-shadow: var(--shadow-md);
   }
   .share-modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-  .share-modal canvas { width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+  .share-modal canvas { width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border); }
   .share-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
   .share-actions button {
-    padding: 8px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    padding: 8px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
     cursor: pointer; font-family: var(--font); transition: all 0.2s;
   }
   .btn-download {
-    background: var(--gradient-main); color: white; border: none;
-    box-shadow: 0 2px 8px rgba(99,102,241,0.3);
+    background: var(--accent); color: white; border: none;
   }
-  .btn-download:hover { box-shadow: 0 4px 16px rgba(99,102,241,0.4); transform: translateY(-1px); }
-  .btn-cancel { background: var(--white); border: 1px solid var(--border); color: var(--text-secondary); }
+  .btn-download:hover { opacity: 0.9; }
+  .btn-cancel { background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); }
   .btn-cancel:hover { border-color: var(--border-strong); }
+
+  /* Token info popup */
+  .info-toggle {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-tertiary); width: 28px; height: 28px;
+    border-radius: 50%; cursor: pointer; font-size: 13px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0; font-family: var(--font);
+  }
+  .info-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .info-popup-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: none; align-items: center; justify-content: center; z-index: 1000;
+    backdrop-filter: blur(2px);
+  }
+  .info-popup-overlay.open { display: flex; }
+  .info-popup {
+    background: var(--surface); border-radius: var(--radius); padding: 28px;
+    max-width: 560px; width: 90%; box-shadow: var(--shadow-md);
+    max-height: 80vh; overflow-y: auto;
+  }
+  .info-popup h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .info-popup p { font-size: 13.5px; line-height: 1.7; color: var(--text-secondary); margin: 0 0 16px; }
+  .info-popup .info-types { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .info-popup .info-type {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 13px; line-height: 1.6; color: var(--text-secondary);
+  }
+  .info-popup .info-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+  }
+  .info-popup .info-tip {
+    background: var(--accent-light); border-radius: var(--radius-sm);
+    padding: 14px 18px; font-size: 13px; line-height: 1.6; color: var(--text-secondary);
+  }
+  .info-popup .info-tip code {
+    background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 2px 6px;
+    border-radius: var(--radius-xs); font-size: 12px; font-weight: 600; color: var(--accent);
+  }
+  .info-popup-close {
+    background: var(--bg); border: none; color: var(--text-secondary);
+    width: 32px; height: 32px; border-radius: var(--radius-sm); cursor: pointer;
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.15s; float: right; margin: -4px -4px 0 0;
+  }
+  .info-popup-close:hover { background: var(--accent-light); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -683,21 +651,14 @@
 
 <div id="app" class="container" style="display:none">
 
-  <!-- Privacy notice -->
-  <div class="privacy-notice animate">
-    &#128274; All data stays on your machine. Nothing is sent anywhere.
-  </div>
-
   <!-- Warnings banner -->
   <div id="warningsBanner" class="warnings-banner"></div>
 
   <!-- Header -->
   <div class="header animate">
     <div class="header-left">
-      <div class="logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-      </div>
-      <h1>Claude Spend</h1>
+      <h1>claude-spend</h1>
+      <button class="info-toggle" onclick="document.getElementById('infoPopup').classList.add('open')" aria-label="How tokens work">?</button>
     </div>
     <div class="header-right">
       <span id="dateRange" class="date-range"></span>
@@ -709,66 +670,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         Refresh
       </button>
-    </div>
-  </div>
-
-  <!-- Value proposition -->
-  <div class="hero-section animate delay-1">
-    <h2 class="hero-title">Your Claude Code usage, visualized.</h2>
-    <p class="hero-subtitle">See where your tokens actually go.</p>
-  </div>
-
-  <!-- How Tokens Work -->
-  <div class="how-tokens animate delay-1">
-    <div class="how-tokens-toggle" onclick="this.parentElement.classList.toggle('expanded')">
-      <h3>How Claude Code tokens work</h3>
-      <div class="how-tokens-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5L6 7.5L9 4.5"/></svg></div>
-    </div>
-    <div class="how-tokens-body">
-      <p>Every time you send a message, Claude doesn't just read your latest message. It re-reads your <strong>entire conversation</strong> from the beginning. That's why tokens add up fast.</p>
-
-      <div class="how-tokens-example">
-        <div class="how-tokens-example-title">Example: A 3-message conversation</div>
-        <div class="how-tokens-step">
-          <span class="step-label">Message 1</span>
-          <span class="step-desc">You send "Help me fix this bug." Claude reads your message fresh (<span style="color:var(--indigo)">input</span>) and saves the conversation to cache (<span style="color:var(--rose)">cache write</span>).</span>
-          <span class="step-tokens">~4K tokens</span>
-        </div>
-        <div class="how-tokens-step">
-          <span class="step-label">Message 2</span>
-          <span class="step-desc">You reply "Try the other file." Claude reuses message 1 from cache (<span style="color:var(--amber)">cache read</span> — 10x cheaper) and only processes your new message fresh (<span style="color:var(--indigo)">input</span>). Then saves the updated conversation (<span style="color:var(--rose)">cache write</span>).</span>
-          <span class="step-tokens">~8K tokens</span>
-        </div>
-        <div class="how-tokens-step">
-          <span class="step-label">Message 3</span>
-          <span class="step-desc">Claude reuses messages 1-2 from cache (<span style="color:var(--amber)">cache read</span>) and processes your new message fresh (<span style="color:var(--indigo)">input</span>). Claude's reply is <span style="color:var(--teal)">output</span>.</span>
-          <span class="step-tokens">~14K tokens</span>
-        </div>
-        <div class="how-tokens-total">Without caching, every message would be processed at full price. Cache reads save you up to 10x on repeated context.</div>
-      </div>
-
-      <div class="how-tokens-types">
-        <div class="how-tokens-type">
-          <div class="how-tokens-dot" style="background:var(--indigo)"></div>
-          <div><strong>Input</strong> — Your message + conversation history, processed fresh. Full price.</div>
-        </div>
-        <div class="how-tokens-type">
-          <div class="how-tokens-dot" style="background:var(--rose)"></div>
-          <div><strong>Cache writes</strong> — Claude saves your conversation so it doesn't re-process everything next time. Costs 1.25x input, but only happens once.</div>
-        </div>
-        <div class="how-tokens-type">
-          <div class="how-tokens-dot" style="background:var(--amber)"></div>
-          <div><strong>Cache reads</strong> — Follow-up messages reuse the saved context. 10x cheaper than input. More cache reads = more savings.</div>
-        </div>
-        <div class="how-tokens-type">
-          <div class="how-tokens-dot" style="background:var(--teal)"></div>
-          <div><strong>Output</strong> — What Claude writes back. Most expensive per token, but usually the smallest amount.</div>
-        </div>
-      </div>
-
-      <div class="how-tokens-tip">
-        <strong>Tip:</strong> Use <code>/clear</code> when switching tasks. It resets the conversation so Claude stops re-reading old context you no longer need.
-      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
     </div>
   </div>
 
@@ -778,9 +683,6 @@
   <!-- Insights -->
   <div id="insightsSection" class="insights-section" style="display:none">
     <div class="section-header animate">
-      <div class="section-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 4 12.75V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.25A7 7 0 0 1 12 2z"/><path d="M9 21h6"/></svg>
-      </div>
       <div class="section-title">Insights</div>
     </div>
     <div id="insightsList"></div>
@@ -789,17 +691,17 @@
   <!-- Charts -->
   <div class="charts-grid animate delay-3">
     <div class="chart-card">
-      <h3 class="has-tooltip has-tooltip-below" style="display:inline-block">Tokens per Day<div class="tooltip">How many tokens you used each day, broken down by type and cost.</div></h3>
+      <h3 class="has-tooltip has-tooltip-below" style="display:inline-block">Tokens per day<div class="tooltip">How many tokens you used each day, broken down by type and cost.</div></h3>
       <canvas id="dailyChart"></canvas>
       <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--indigo)"></div> Input</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--rose)"></div> Cache writes</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Cache reads</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div> Output</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--chart-1)"></div> Input</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--error)"></div> Cache writes</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--chart-5)"></div> Cache reads</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--chart-3)"></div> Output</div>
       </div>
     </div>
     <div class="chart-card">
-      <h3>By Model</h3>
+      <h3>By model</h3>
       <canvas id="modelChart"></canvas>
       <div id="modelLegend" class="legend" style="flex-direction:column; gap:12px; margin-top:20px;"></div>
     </div>
@@ -810,10 +712,7 @@
   <!-- Most Expensive Prompts -->
   <div class="top-prompts animate delay-4">
     <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-      </div>
-      <div class="section-title has-tooltip has-tooltip-below" style="display:inline-flex">Most Expensive Prompts<div class="tooltip">Your top 20 individual messages ranked by how many tokens they used. Short vague messages like "Yes" often rank highest because they trigger long chains of tool calls where Claude tries to figure out what you meant.</div></div>
+      <div class="section-title has-tooltip has-tooltip-below" style="display:inline-flex">Most expensive prompts<div class="tooltip">Your top 20 individual messages ranked by how many tokens they used. Short vague messages like "Yes" often rank highest because they trigger long chains of tool calls where Claude tries to figure out what you meant.</div></div>
     </div>
     <div class="prompts-card" id="topPromptsList"></div>
   </div>
@@ -828,12 +727,12 @@
       <button class="drilldown-close" onclick="closeDrilldown()">&times;</button>
     </div>
     <div id="turnChartWrap" style="margin-bottom:20px;display:none">
-      <h3 style="font-size:13px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 2px">Cost per turn</h3>
-      <span style="display:block;font-size:11px;color:var(--text-tertiary);margin:0 0 10px;opacity:0.7">Each dot is one turn (your message + Claude's full response). Y-axis shows API-equivalent cost. You don't pay this on a subscription, but it shows how much work each turn requires.</span>
+      <h3 style="font-size:14px;font-weight:600;color:var(--text-primary);margin:0 0 2px">Cost per turn</h3>
+      <span style="display:block;font-size:11px;color:var(--text-tertiary);margin:0 0 10px">Each dot is one turn (your message + Claude's full response). Y-axis shows API-equivalent cost. You don't pay this on a subscription, but it shows how much work each turn requires.</span>
       <canvas id="turnCostChart"></canvas>
     </div>
-    <div id="turnChartInsight" style="display:none;margin-bottom:16px;padding:10px 14px;border-radius:8px;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(244,63,94,0.06));border:1px solid rgba(245,158,11,0.15)">
-      <div style="font-size:12px;font-weight:600;color:#D97706;margin-bottom:3px" id="turnChartInsightTitle"></div>
+    <div id="turnChartInsight" style="display:none;margin-bottom:16px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--accent-light);border:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--chart-5);margin-bottom:3px" id="turnChartInsightTitle"></div>
       <div style="font-size:11px;color:var(--text-secondary);line-height:1.5" id="turnChartInsightBody"></div>
     </div>
     <div id="queryList" class="query-list"></div>
@@ -842,10 +741,7 @@
   <!-- All Sessions -->
   <div class="sessions-section animate delay-5">
     <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
-      </div>
-      <div class="section-title">All Sessions</div>
+      <div class="section-title">All sessions</div>
     </div>
     <div class="sessions-toolbar">
       <input type="text" class="session-search" id="searchInput" placeholder="Search prompts, models, projects...">
@@ -870,8 +766,38 @@
   </div>
 
   <div class="footer">
-    <div style="margin-bottom: 8px; color: var(--text-secondary); font-size: 13px;">This tool runs 100% locally -- no analytics, no tracking. If you find it useful (or not), I'd love to hear from you at <a href="mailto:writetoaniketparihar@gmail.com">writetoaniketparihar@gmail.com</a></div>
-    Made with <a href="https://claude.ai/code" target="_blank">Claude Code</a> and &#10084; by <a href="https://www.linkedin.com/in/writetoaniketparihar/" target="_blank">Aniket</a>
+    All data stays local. Nothing sent anywhere.<br>
+    Forked from <a href="https://github.com/writetoaniketparihar-collab/claude-spend">claude-spend</a> by Aniket Parihar
+  </div>
+</div>
+
+<!-- How Tokens Work info popup -->
+<div id="infoPopup" class="info-popup-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="info-popup">
+    <button class="info-popup-close" onclick="document.getElementById('infoPopup').classList.remove('open')">&times;</button>
+    <h3>How Claude Code tokens work</h3>
+    <p>Every time you send a message, Claude doesn't just read your latest message. It re-reads your <strong>entire conversation</strong> from the beginning. That's why tokens add up fast.</p>
+    <div class="info-types">
+      <div class="info-type">
+        <div class="info-dot" style="background:var(--chart-1)"></div>
+        <div><strong>Input</strong> -- Your message + conversation history, processed fresh. Full price.</div>
+      </div>
+      <div class="info-type">
+        <div class="info-dot" style="background:var(--error)"></div>
+        <div><strong>Cache writes</strong> -- Claude saves your conversation so it doesn't re-process everything next time. Costs 1.25x input, but only happens once.</div>
+      </div>
+      <div class="info-type">
+        <div class="info-dot" style="background:var(--chart-5)"></div>
+        <div><strong>Cache reads</strong> -- Follow-up messages reuse the saved context. 10x cheaper than input. More cache reads = more savings.</div>
+      </div>
+      <div class="info-type">
+        <div class="info-dot" style="background:var(--chart-3)"></div>
+        <div><strong>Output</strong> -- What Claude writes back. Most expensive per token, but usually the smallest amount.</div>
+      </div>
+    </div>
+    <div class="info-tip">
+      <strong>Tip:</strong> Use <code>/clear</code> when switching tasks. It resets the conversation so Claude stops re-reading old context you no longer need.
+    </div>
   </div>
 </div>
 
@@ -891,6 +817,25 @@
 let DATA = null;
 let currentSort = { key: 'total', dir: 'desc' };
 let searchQuery = '';
+
+// Theme toggle
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('claude-spend-theme', next);
+  // Re-render charts with new colors
+  if (DATA) { renderDailyChart(); renderModelChart(); }
+}
+
+// Initialize theme
+(function() {
+  const saved = localStorage.getItem('claude-spend-theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+})();
 
 function fmt(n) {
   if (n == null || isNaN(n)) return '0';
@@ -958,6 +903,11 @@ function formatDate(d) {
   return `${months[parseInt(parts[1])-1]} ${parseInt(parts[2])}`;
 }
 
+// Helper: read CSS variable from computed style
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 async function fetchData() {
   try {
     const res = await fetch('/api/data');
@@ -989,14 +939,14 @@ function showError(msg) {
   const safe = msg.replace(/</g, '&lt;');
   let hint = '';
   if (safe.includes('ENOENT') || safe.includes('not found')) {
-    hint = '<p style="color:#94a3b8;font-size:13px;margin:0 0 20px">Make sure you have used Claude Code at least once. The data directory is created automatically.</p>';
+    hint = '<p style="color:var(--text-tertiary);font-size:13px;margin:0 0 20px">Make sure you have used Claude Code at least once. The data directory is created automatically.</p>';
   } else if (safe.includes('EPERM') || safe.includes('EACCES') || safe.includes('ermission')) {
-    hint = '<p style="color:#94a3b8;font-size:13px;margin:0 0 20px">Try running with elevated permissions, or check file permissions on your ~/.claude directory.</p>';
+    hint = '<p style="color:var(--text-tertiary);font-size:13px;margin:0 0 20px">Try running with elevated permissions, or check file permissions on your ~/.claude directory.</p>';
   }
   el.innerHTML = '<div style="font-size:48px;margin-bottom:16px">&#9888;&#65039;</div>' +
-    '<h2 style="margin:0 0 12px;color:#1a1a2e">Something went wrong</h2>' +
-    '<p style="color:#64748b;margin:0 0 12px;line-height:1.6">' + safe + '</p>' + hint +
-    '<button onclick="location.reload()" style="padding:8px 20px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:14px">Retry</button>';
+    '<h2 style="margin:0 0 12px">Something went wrong</h2>' +
+    '<p style="color:var(--text-secondary);margin:0 0 12px;line-height:1.6">' + safe + '</p>' + hint +
+    '<button onclick="location.reload()" style="padding:8px 20px;border-radius:8px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:14px;color:var(--text-primary)">Retry</button>';
 }
 function renderWarnings() {
   const warnings = DATA.warnings || [];
@@ -1062,7 +1012,6 @@ function renderInsights() {
   if (!insights.length) { section.style.display = 'none'; return; }
 
   section.style.display = 'block';
-  const icons = { warning: '!', info: 'i', neutral: '~' };
   const emojis = { warning: '\u26A0\uFE0F', info: '\uD83D\uDCA1', neutral: '\uD83D\uDCC5' };
 
   document.getElementById('insightsList').innerHTML = insights.map((ins, i) => {
@@ -1082,7 +1031,7 @@ function renderInsights() {
   }).join('');
 }
 
-// Daily chart -- 3 color stacked bars
+// Daily chart -- stacked bars using CSS vars
 function renderDailyChart() {
   const canvas = document.getElementById('dailyChart');
   const ctx = canvas.getContext('2d');
@@ -1103,29 +1052,27 @@ function renderDailyChart() {
   const chartH = h - 36;
   const startX = 48;
 
+  // Read colors from CSS vars
+  const colInput = cssVar('--chart-1');
+  const colCacheWrite = cssVar('--error');
+  const colCacheRead = cssVar('--chart-5');
+  const colOutput = cssVar('--chart-3');
+  const colGrid = cssVar('--text-tertiary');
+  const colGridLine = cssVar('--border');
+
   // Grid
   ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = colGrid;
   ctx.textAlign = 'right';
   for (let i = 0; i <= 4; i++) {
     const val = (maxTotal / 4) * i;
     const y = chartH - (chartH * i / 4) + 8;
     ctx.fillText(fmt(val), startX - 10, y + 3);
-    ctx.strokeStyle = 'rgba(0,0,0,0.04)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = colGridLine; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(w, y); ctx.stroke();
   }
 
-  // Gradients
-  const inGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
-  inGrad.addColorStop(0, '#818CF8'); inGrad.addColorStop(1, '#6366F1');
-  const cacheWriteGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
-  cacheWriteGrad.addColorStop(0, '#FB7185'); cacheWriteGrad.addColorStop(1, '#F43F5E');
-  const cacheReadGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
-  cacheReadGrad.addColorStop(0, '#FBBF24'); cacheReadGrad.addColorStop(1, '#F59E0B');
-  const outGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
-  outGrad.addColorStop(0, '#2DD4BF'); outGrad.addColorStop(1, '#14B8A6');
-
-  const minH = 3; // minimum pixel height so small segments stay visible
+  const minH = 3;
 
   data.forEach((d, i) => {
     const x = startX + i * (barW + gap);
@@ -1133,45 +1080,45 @@ function renderDailyChart() {
     const r = Math.min(4, barW / 2);
     let y = baseY;
 
-    // Bottom: output (teal)
+    // Bottom: output
     let outH = (d.outputTokens / maxTotal) * chartH;
     if (d.outputTokens > 0) outH = Math.max(minH, outH);
     if (outH > 0) {
-      ctx.fillStyle = outGrad;
+      ctx.fillStyle = colOutput;
       ctx.beginPath(); roundedRect(ctx, x, y - outH, barW, outH, r); ctx.fill();
       y -= outH;
     }
 
-    // Cache reads (amber)
+    // Cache reads
     let cacheRH = ((d.cacheReadTokens || 0) / maxTotal) * chartH;
     if ((d.cacheReadTokens || 0) > 0) cacheRH = Math.max(minH, cacheRH);
     if (cacheRH > 0) {
-      ctx.fillStyle = cacheReadGrad;
+      ctx.fillStyle = colCacheRead;
       ctx.beginPath(); roundedRect(ctx, x, y - cacheRH, barW, cacheRH, 0); ctx.fill();
       y -= cacheRH;
     }
 
-    // Cache writes (rose)
+    // Cache writes
     let cacheWH = ((d.cacheCreationTokens || 0) / maxTotal) * chartH;
     if ((d.cacheCreationTokens || 0) > 0) cacheWH = Math.max(minH, cacheWH);
     if (cacheWH > 0) {
-      ctx.fillStyle = cacheWriteGrad;
+      ctx.fillStyle = colCacheWrite;
       ctx.beginPath(); roundedRect(ctx, x, y - cacheWH, barW, cacheWH, 0); ctx.fill();
       y -= cacheWH;
     }
 
-    // Top: input (indigo)
+    // Top: input
     let freshH = (d.inputTokens / maxTotal) * chartH;
     if (d.inputTokens > 0) freshH = Math.max(minH, freshH);
     if (freshH > 0) {
-      ctx.fillStyle = inGrad;
+      ctx.fillStyle = colInput;
       ctx.beginPath(); roundedRect(ctx, x, y - freshH, barW, freshH, r); ctx.fill();
       y -= freshH;
     }
   });
 
   // X labels
-  ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center';
+  ctx.fillStyle = colGrid; ctx.textAlign = 'center';
   ctx.font = '500 10px Inter, system-ui';
   const step = Math.max(1, Math.floor(data.length / 7));
   data.forEach((d, i) => {
@@ -1213,44 +1160,50 @@ function renderModelChart() {
   const cx = size/2, cy = size/2, r = size/2 - 6, innerR = r * 0.6;
   const total = data.reduce((s, d) => s + d.totalTokens, 0);
 
-  const modelColors = { opus: ['#6366F1','#818CF8'], sonnet: ['#10B981','#34D399'], haiku: ['#F97316','#FB923C'] };
-  function getColors(m) {
+  // Use chart colors from CSS vars
+  const chart1 = cssVar('--chart-1');
+  const chart4 = cssVar('--chart-4');
+  const chart5 = cssVar('--chart-5');
+  const colTertiary = cssVar('--text-tertiary');
+
+  const modelColors = { opus: chart1, sonnet: chart4, haiku: chart5 };
+  function getColor(m) {
     for (const [k, c] of Object.entries(modelColors)) { if (m.includes(k)) return c; }
-    return ['#94A3B8','#CBD5E1'];
+    return colTertiary;
   }
 
   let angle = -Math.PI / 2;
   const slices = [...data].sort((a, b) => b.totalTokens - a.totalTokens);
 
+  const surfaceColor = cssVar('--surface');
+
   slices.forEach(d => {
     const sa = (d.totalTokens / total) * Math.PI * 2;
-    const [c1, c2] = getColors(d.model);
-    const grad = ctx.createConicGradient(angle, cx, cy);
-    grad.addColorStop(0, c1); grad.addColorStop(1, c2);
+    const color = getColor(d.model);
 
     ctx.beginPath();
     ctx.arc(cx, cy, r, angle, angle + sa);
     ctx.arc(cx, cy, innerR, angle + sa, angle, true);
     ctx.closePath();
-    ctx.fillStyle = c1;
+    ctx.fillStyle = color;
     ctx.fill();
 
     // Gap between slices
-    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = surfaceColor; ctx.lineWidth = 2; ctx.stroke();
     angle += sa;
   });
 
-  ctx.fillStyle = '#0F172A'; ctx.textAlign = 'center';
-  ctx.font = '800 17px Inter, system-ui';
+  ctx.fillStyle = cssVar('--text-primary'); ctx.textAlign = 'center';
+  ctx.font = '700 17px Inter, system-ui';
   ctx.fillText(fmt(total), cx, cy + 2);
   ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = colTertiary;
   ctx.fillText('total', cx, cy + 16);
 
   document.getElementById('modelLegend').innerHTML = slices.map(d => {
     const pct = ((d.totalTokens / total) * 100).toFixed(1);
     return `<div class="legend-item">
-      <div class="legend-dot" style="background:${getColors(d.model)[0]}"></div>
+      <div class="legend-dot" style="background:${getColor(d.model)}"></div>
       <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)</span>
     </div>`;
   }).join('');
@@ -1328,7 +1281,7 @@ function renderProjectBreakdown() {
       '<td class="token-num" style="font-weight:700;vertical-align:top;padding-top:12px">',
       '<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">',
       '<div style="flex:1;max-width:60px;height:3px;background:var(--bg);border-radius:4px;overflow:hidden">',
-      '<div style="width:' + barPct + '%;height:100%;background:var(--indigo);border-radius:4px"></div>',
+      '<div style="width:' + barPct + '%;height:100%;background:var(--accent);border-radius:4px"></div>',
       '</div><div><div>' + fmt(p.totalTokens) + '</div><div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmt(p.inputTokens) + ' in\u00a0\u00b7\u00a0' + fmt(p.outputTokens) + ' out</div></div></div></td>',
       '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.sessionCount + '</td>',
       '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.queryCount + '</td>',
@@ -1370,7 +1323,7 @@ function renderTopPrompts() {
         </div>
       </div>
       <div class="prompt-tokens">
-        <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--indigo)">${fmt(p.totalTokens)}</div>
+        <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent)">${fmt(p.totalTokens)}</div>
         <div class="sub">${fmt(p.inputTokens)} in / ${fmt(cached)} cached / ${fmt(p.outputTokens)} out</div>
       </div>
     </div>`;
@@ -1493,27 +1446,31 @@ function renderTurnCostChart(grouped) {
   const chartW = w - padL - padR;
   const chartH = h - padT - padB;
 
+  const colGrid = cssVar('--text-tertiary');
+  const colGridLine = cssVar('--border');
+  const colAccent = cssVar('--accent');
+  const colError = cssVar('--error');
+  const colWarning = cssVar('--chart-5');
+
   // Grid lines
   ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = colGrid;
   ctx.textAlign = 'right';
   for (let i = 0; i <= 3; i++) {
     const val = (maxCost / 3) * i;
     const y = padT + chartH - (chartH * i / 3);
     ctx.fillText('$' + val.toFixed(3), padL - 8, y + 3);
-    ctx.strokeStyle = 'rgba(0,0,0,0.04)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = colGridLine; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
   }
 
   const stepX = grouped.length > 1 ? chartW / (grouped.length - 1) : chartW;
 
-  // Find the most expensive turn — that's where /clear would have helped most.
-  // The line says "a /clear before this turn would have reduced its cost."
+  // Find the most expensive turn
   let inflectionIdx = -1;
   if (grouped.length >= 6) {
     const sorted = costs.map((c, i) => ({ c, i })).sort((a, b) => b.c - a.c);
     const topIdx = sorted[0].i;
-    // Only show if the top turn is at least 3x the median cost (i.e. it's actually a spike)
     const sortedCosts = [...costs].sort((a, b) => a - b);
     const median = sortedCosts[Math.floor(sortedCosts.length / 2)];
     if (topIdx > 0 && sorted[0].c > median * 3 && sorted[0].c > 0.01) {
@@ -1523,8 +1480,8 @@ function renderTurnCostChart(grouped) {
 
   // Area gradient fill
   const gradient = ctx.createLinearGradient(0, padT, 0, padT + chartH);
-  gradient.addColorStop(0, 'rgba(244,63,94,0.25)');
-  gradient.addColorStop(1, 'rgba(99,102,241,0.05)');
+  gradient.addColorStop(0, colError + '40');
+  gradient.addColorStop(1, colAccent + '0D');
 
   ctx.beginPath();
   costs.forEach((c, i) => {
@@ -1540,8 +1497,8 @@ function renderTurnCostChart(grouped) {
 
   // Line
   const lineGrad = ctx.createLinearGradient(padL, 0, padL + chartW, 0);
-  lineGrad.addColorStop(0, '#6366F1');
-  lineGrad.addColorStop(1, '#F43F5E');
+  lineGrad.addColorStop(0, colAccent);
+  lineGrad.addColorStop(1, colError);
   ctx.beginPath();
   costs.forEach((c, i) => {
     const x = padL + i * stepX;
@@ -1559,7 +1516,7 @@ function renderTurnCostChart(grouped) {
     const t = costs.length > 1 ? i / (costs.length - 1) : 0;
     ctx.beginPath();
     ctx.arc(x, y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = t < 0.5 ? '#6366F1' : '#F43F5E';
+    ctx.fillStyle = t < 0.5 ? colAccent : colError;
     ctx.fill();
   });
 
@@ -1567,16 +1524,15 @@ function renderTurnCostChart(grouped) {
   if (inflectionIdx > 0) {
     const ix = padL + inflectionIdx * stepX;
     ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = '#F59E0B';
+    ctx.strokeStyle = colWarning;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(ix, padT);
     ctx.lineTo(ix, padT + chartH);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = '#F59E0B';
+    ctx.fillStyle = colWarning;
     ctx.font = '600 10px Inter, system-ui';
-    // Position label: keep it inside chart bounds
     const labelText = '$' + costs[inflectionIdx].toFixed(2) + ' \u2014 most expensive';
     const labelWidth = ctx.measureText(labelText).width;
     if (ix + labelWidth / 2 > w - padR) {
@@ -1589,7 +1545,7 @@ function renderTurnCostChart(grouped) {
   }
 
   // X labels
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = colGrid;
   ctx.font = '500 10px Inter, system-ui';
   ctx.textAlign = 'center';
   const labelStep = Math.max(1, Math.floor(grouped.length / 8));
@@ -1622,34 +1578,24 @@ function renderDrilldownInsight(grouped, session) {
   const topTurnIdx = costs.indexOf(maxTurnCost);
   const hasSpike = topTurnIdx > 0 && maxTurnCost > median * 3 && maxTurnCost > 0.01;
 
-  let title = '', body = '', bg = '', border = '', color = '';
+  let title = '', body = '';
 
   if (hasSpike) {
-    // Has an expensive spike - explain it and recommend /clear
-    const spikeCost = maxTurnCost;
-    title = `\u26A0\uFE0F Turn ${topTurnIdx + 1} cost $${spikeCost.toFixed(2)} \u2014 ${median > 0 ? (spikeCost / median).toFixed(0) + 'x' : 'far'} more than a typical turn`;
+    title = `\u26A0\uFE0F Turn ${topTurnIdx + 1} cost $${maxTurnCost.toFixed(2)} \u2014 ${median > 0 ? (maxTurnCost / median).toFixed(0) + 'x' : 'far'} more than a typical turn`;
     body = `Median turn cost: $${median.toFixed(4)}. The spike at turn ${topTurnIdx + 1} happened because the context had grown large by that point. Running /clear before expensive turns resets the context and brings costs back down. Tip: if you notice Claude slowing down or you are switching to a different task, that is a good time to /clear.`;
-    bg = 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(244,63,94,0.06))';
-    border = 'rgba(245,158,11,0.15)';
-    color = '#D97706';
+    insightTitle.style.color = cssVar('--chart-5');
   } else if (costs.length > 50) {
-    // Long conversation, no big spike
     const lastQuarter = costs.slice(Math.floor(costs.length * 0.75));
     const lastQuarterAvg = lastQuarter.reduce((a, b) => a + b, 0) / lastQuarter.length;
     title = `\u2139\uFE0F ${costs.length} turns is a long conversation`;
     body = `Caching kept costs steady (avg ~$${avgCost.toFixed(4)}/turn), but the context window still grew large. Late turns averaged ~$${lastQuarterAvg.toFixed(4)}. Consider splitting into smaller conversations for better focus and lower risk of hitting context limits.`;
-    bg = 'linear-gradient(135deg,rgba(99,102,241,0.06),rgba(99,102,241,0.02))';
-    border = 'rgba(99,102,241,0.12)';
-    color = '#6366F1';
+    insightTitle.style.color = cssVar('--accent');
   } else if (costs.length >= 3) {
-    // Normal/healthy
     const totalTokens = session.totalTokens;
     const cacheRate = session.queries ? Math.round(session.queries.reduce((s, q) => s + (q.cacheReadTokens || 0), 0) / Math.max(1, totalTokens) * 100) : 0;
     title = `\u2705 This conversation was efficient`;
     body = `${costs.length} turns, avg ~$${avgCost.toFixed(4)}/turn, total ~$${totalCost.toFixed(2)} API-equivalent. ${cacheRate > 50 ? `Cache hit rate: ${cacheRate}% (good).` : cacheRate > 0 ? `Cache hit rate: ${cacheRate}%.` : ''} No issues detected.`;
-    bg = 'linear-gradient(135deg,rgba(16,185,129,0.06),rgba(16,185,129,0.02))';
-    border = 'rgba(16,185,129,0.12)';
-    color = '#059669';
+    insightTitle.style.color = cssVar('--success');
   } else {
     insightBox.style.display = 'none';
     return;
@@ -1657,9 +1603,6 @@ function renderDrilldownInsight(grouped, session) {
 
   insightTitle.textContent = title;
   insightBody.textContent = body;
-  insightBox.style.background = bg;
-  insightBox.style.borderColor = border;
-  insightTitle.style.color = color;
   insightBox.style.display = 'block';
 }
 
@@ -1752,7 +1695,7 @@ async function generateShareCard() {
 
   // Accent glow
   const glow = ctx.createRadialGradient(200, 100, 0, 200, 100, 400);
-  glow.addColorStop(0, 'rgba(99,102,241,0.15)');
+  glow.addColorStop(0, 'rgba(37,99,235,0.15)');
   glow.addColorStop(1, 'transparent');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
@@ -1769,10 +1712,10 @@ async function generateShareCard() {
     ctx.fillText(`${t.dateRange.from} to ${t.dateRange.to}`, 60, 116);
   }
 
-  // Top insight in amber
+  // Top insight
   const insights = DATA.insights || [];
   if (insights.length > 0) {
-    ctx.fillStyle = '#F59E0B';
+    ctx.fillStyle = '#D97706';
     ctx.font = '600 20px Inter, system-ui';
     wrapText(ctx, insights[0].title, 60, 160, W - 120, 28);
   }
@@ -1811,7 +1754,7 @@ async function generateShareCard() {
     // Label
     ctx.fillStyle = '#94A3B8';
     ctx.font = '600 14px Inter, system-ui';
-    ctx.fillText(s.label.toUpperCase(), x + 24, y + 36);
+    ctx.fillText(s.label, x + 24, y + 36);
 
     // Value
     ctx.fillStyle = '#F8FAFC';
@@ -1823,7 +1766,7 @@ async function generateShareCard() {
   const footerY = H - 50;
   ctx.fillStyle = '#64748B';
   ctx.font = '500 16px Inter, system-ui';
-  ctx.fillText('claudespend.live', 60, footerY);
+  ctx.fillText('claude-spend', 60, footerY);
 
   ctx.fillStyle = '#475569';
   ctx.font = '500 14px Inter, system-ui';
