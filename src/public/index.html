@@ -1285,9 +1285,10 @@ function renderStats() {
       tip: 'Every time you hit Enter and send something to Claude, that is one message. This includes follow-up tool calls Claude makes automatically behind the scenes.' },
     { label: 'Cache Hit Rate', value: `${((t.cacheHitRate || 0) * 100).toFixed(0)}%`, sub: `${fmt(t.totalCacheReadTokens || 0)} tokens served from cache`,
       tip: 'The percentage of input tokens that were served from cache instead of being processed fresh. Higher is better -- cached tokens are 10x cheaper and help you stay under rate limits.' },
-    { label: 'Projected monthly', value: DATA.forecast ? '$' + DATA.forecast.projectedMonthlyCost.toFixed(2) : '$0.00',
-      sub: DATA.forecast ? 'Based on $' + DATA.forecast.avgDailyCost.toFixed(2) + '/day avg (lifetime, ' + DATA.forecast.daysOfData + ' days)' : 'No data',
-      tip: 'API-equivalent monthly projection based on your lifetime daily average. Always uses all-time data for a stable estimate. You don\'t pay this on a subscription plan.' },
+    { label: 'Projected monthly',
+      value: DATA.forecast ? '$' + (DATA.forecast.periodAvgDailyCost * 30).toFixed(2) : '$0.00',
+      sub: DATA.forecast ? '$' + DATA.forecast.periodAvgDailyCost.toFixed(2) + '/day this period' + (DATA.forecast.periodDaysOfData !== DATA.forecast.daysOfData ? ' \u00b7 $' + DATA.forecast.avgDailyCost.toFixed(2) + '/day lifetime' : '') : 'No data',
+      tip: 'API-equivalent monthly projection based on the selected period\'s daily average. Lifetime average shown for comparison when filtering. You don\'t pay this on a subscription plan.' },
   ];
 
   document.getElementById('statsRow').innerHTML = cards.map((c, i) => `
