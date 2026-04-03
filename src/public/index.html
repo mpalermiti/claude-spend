@@ -2074,47 +2074,40 @@ async function generateShareCard() {
   const W = 1200, H = 630;
   canvas.width = W; canvas.height = H;
 
-  // Background gradient
-  const bg = ctx.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, '#0F172A');
-  bg.addColorStop(1, '#1E293B');
-  ctx.fillStyle = bg;
+  // Background — matches dark theme
+  ctx.fillStyle = '#09090B';
   ctx.fillRect(0, 0, W, H);
 
-  // Subtle grid pattern
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-  ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-  for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  // Dot grid
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  for (let x = 0; x < W; x += 24) {
+    for (let y = 0; y < H; y += 24) {
+      ctx.beginPath();
+      ctx.arc(x, y, 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 
-  // Accent glow
-  const glow = ctx.createRadialGradient(200, 100, 0, 200, 100, 400);
-  glow.addColorStop(0, 'rgba(37,99,235,0.15)');
+  // Accent glow (top)
+  const glow = ctx.createRadialGradient(W / 2, 0, 0, W / 2, 0, 500);
+  glow.addColorStop(0, 'rgba(14,165,233,0.08)');
   glow.addColorStop(1, 'transparent');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
 
-  // Title
-  ctx.fillStyle = '#F8FAFC';
-  ctx.font = '800 42px Inter, system-ui';
-  ctx.fillText('My Claude Code Stats', 60, 80);
+  // Title — mono, cyan
+  ctx.fillStyle = '#0EA5E9';
+  ctx.font = '600 20px "JetBrains Mono", monospace';
+  ctx.fillText('claude-spend', 60, 60);
 
   // Date range
   if (t.dateRange) {
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '500 18px Inter, system-ui';
-    ctx.fillText(`${t.dateRange.from} to ${t.dateRange.to}`, 60, 116);
+    ctx.fillStyle = '#5A5A5A';
+    ctx.font = '400 14px "JetBrains Mono", monospace';
+    ctx.fillText(t.dateRange.from + ' \u2014 ' + t.dateRange.to, 60, 88);
   }
 
-  // Top insight
-  const insights = DATA.insights || [];
-  if (insights.length > 0) {
-    ctx.fillStyle = '#D97706';
-    ctx.font = '600 20px Inter, system-ui';
-    wrapText(ctx, insights[0].title, 60, 160, W - 120, 28);
-  }
-
-  // 2x2 Stats grid
+  // Stats — 2x2 grid
   const stats = [
     { label: 'Total Tokens', value: fmt(t.totalTokens) },
     { label: 'Conversations', value: fmtFull(t.totalSessions) },
@@ -2122,50 +2115,58 @@ async function generateShareCard() {
     { label: 'Est. API Cost', value: '$' + (t.totalCost || 0).toFixed(2) },
   ];
 
-  const gridY = 230;
-  const cellW = (W - 120 - 40) / 2;
-  const cellH = 160;
+  const gridY = 140;
+  const cellW = (W - 120 - 32) / 2;
+  const cellH = 150;
 
   stats.forEach((s, i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
-    const x = 60 + col * (cellW + 40);
-    const y = gridY + row * (cellH + 20);
+    const x = 60 + col * (cellW + 32);
+    const y = gridY + row * (cellH + 16);
 
-    // Card background
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    // Card
+    ctx.fillStyle = '#111113';
     ctx.beginPath();
-    roundedRect(ctx, x, y, cellW, cellH, 16);
+    roundedRect(ctx, x, y, cellW, cellH, 10);
     ctx.fill();
 
     // Border
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.strokeStyle = '#1F1F23';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    roundedRect(ctx, x, y, cellW, cellH, 16);
+    roundedRect(ctx, x, y, cellW, cellH, 10);
     ctx.stroke();
 
     // Label
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '600 14px Inter, system-ui';
+    ctx.fillStyle = '#5A5A5A';
+    ctx.font = '500 12px "JetBrains Mono", monospace';
     ctx.fillText(s.label, x + 24, y + 36);
 
-    // Value
-    ctx.fillStyle = '#F8FAFC';
-    ctx.font = '800 48px Inter, system-ui';
-    ctx.fillText(s.value, x + 24, y + 100);
+    // Value — cyan
+    ctx.fillStyle = '#0EA5E9';
+    ctx.font = '700 44px "JetBrains Mono", monospace';
+    ctx.fillText(s.value, x + 24, y + 96);
   });
 
-  // Branding footer
-  const footerY = H - 50;
-  ctx.fillStyle = '#64748B';
-  ctx.font = '500 16px Inter, system-ui';
-  ctx.fillText('claude-spend', 60, footerY);
+  // Top insight
+  const insights = DATA.insights || [];
+  if (insights.length > 0) {
+    const insightY = gridY + 2 * (cellH + 16) + 20;
+    ctx.fillStyle = '#5A5A5A';
+    ctx.font = '400 13px "Outfit", system-ui';
+    wrapText(ctx, insights[0].title, 60, insightY, W - 120, 20);
+  }
 
-  ctx.fillStyle = '#475569';
-  ctx.font = '500 14px Inter, system-ui';
+  // Footer
+  const footerY = H - 40;
+  ctx.fillStyle = '#2A2A2E';
+  ctx.font = '400 13px "JetBrains Mono", monospace';
+  ctx.fillText('npx @mpalermiti/claude-spend', 60, footerY);
+
+  ctx.fillStyle = '#2A2A2E';
   ctx.textAlign = 'right';
-  ctx.fillText('npx claude-spend', W - 60, footerY);
+  ctx.fillText('michaelp.ai', W - 60, footerY);
   ctx.textAlign = 'left';
 
   // Show overlay
