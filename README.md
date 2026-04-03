@@ -1,16 +1,12 @@
 # claude-spend
 
-I hit Claude Code token limits daily and had no idea where the tokens were going. So I forked [Aniket Parihar's claude-spend](https://github.com/writetoaniketparihar-collab/claude-spend) and rebuilt it into something I'd actually use.
-
-One command. Local dashboard. No setup.
+See where your Claude Code tokens go. One command. Local dashboard. No setup.
 
 ```bash
 npx @mpalermiti/claude-spend
 ```
 
 <!-- screenshot goes here -->
-
-## What it does
 
 Reads your local Claude Code session data (`~/.claude/`) and shows you exactly where your tokens go. Everything runs locally. Nothing leaves your machine.
 
