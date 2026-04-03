@@ -124,7 +124,17 @@ function extractSessionData(entries) {
   return queries;
 }
 
-async function parseAllSessions() {
+function filterSessionsByDateRange(sessions, { from, to } = {}) {
+  return sessions.filter(s => {
+    const date = s.date;
+    if (!date || date === 'unknown') return true;
+    if (from && date < from) return false;
+    if (to && date > to) return false;
+    return true;
+  });
+}
+
+async function parseAllSessions({ from, to } = {}) {
   const claudeDir = getClaudeDir();
   const projectsDir = path.join(claudeDir, 'projects');
   const warnings = [];
@@ -160,9 +170,6 @@ async function parseAllSessions() {
   });
 
   const sessions = [];
-  const dailyMap = {};
-  const modelMap = {};
-  const allPrompts = []; // for "most expensive prompts" across all sessions
 
   for (const projectDir of projectDirs) {
     const dir = path.join(projectsDir, projectDir);
@@ -212,44 +219,6 @@ async function parseAllSessions() {
         || queries.find(q => q.userPrompt)?.userPrompt
         || '(no prompt)';
 
-      // Collect per-prompt data for "most expensive prompts"
-      // Group consecutive queries under the same user prompt
-      let currentPrompt = null;
-      let promptInput = 0, promptOutput = 0, promptCacheCreation = 0, promptCacheRead = 0, promptCost = 0;
-      const flushPrompt = () => {
-        if (currentPrompt && (promptInput + promptOutput + promptCacheCreation + promptCacheRead) > 0) {
-          allPrompts.push({
-            prompt: currentPrompt.substring(0, 300),
-            inputTokens: promptInput,
-            outputTokens: promptOutput,
-            cacheCreationTokens: promptCacheCreation,
-            cacheReadTokens: promptCacheRead,
-            totalTokens: promptInput + promptOutput + promptCacheCreation + promptCacheRead,
-            cost: promptCost,
-            date,
-            sessionId,
-            model: primaryModel,
-          });
-        }
-      };
-      for (const q of queries) {
-        if (q.userPrompt && q.userPrompt !== currentPrompt) {
-          flushPrompt();
-          currentPrompt = q.userPrompt;
-          promptInput = 0;
-          promptOutput = 0;
-          promptCacheCreation = 0;
-          promptCacheRead = 0;
-          promptCost = 0;
-        }
-        promptInput += q.inputTokens;
-        promptOutput += q.outputTokens;
-        promptCacheCreation += q.cacheCreationTokens;
-        promptCacheRead += q.cacheReadTokens;
-        promptCost += q.cost;
-      }
-      flushPrompt();
-
       sessions.push({
         sessionId,
         project: projectDir,
@@ -266,44 +235,93 @@ async function parseAllSessions() {
         totalTokens,
         cost,
       });
-
-      // Daily
-      if (date !== 'unknown') {
-        if (!dailyMap[date]) {
-          dailyMap[date] = { date, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, cost: 0, sessions: 0, queries: 0 };
-        }
-        dailyMap[date].inputTokens += inputTokens;
-        dailyMap[date].outputTokens += outputTokens;
-        dailyMap[date].cacheCreationTokens += cacheCreationTokens;
-        dailyMap[date].cacheReadTokens += cacheReadTokens;
-        dailyMap[date].totalTokens += totalTokens;
-        dailyMap[date].cost += cost;
-        dailyMap[date].sessions += 1;
-        dailyMap[date].queries += queries.length;
-      }
-
-      // Model
-      for (const q of queries) {
-        if (q.model === '<synthetic>' || q.model === 'unknown') continue;
-        if (!modelMap[q.model]) {
-          modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, cost: 0, queryCount: 0 };
-        }
-        modelMap[q.model].inputTokens += q.inputTokens;
-        modelMap[q.model].outputTokens += q.outputTokens;
-        modelMap[q.model].cacheCreationTokens += q.cacheCreationTokens;
-        modelMap[q.model].cacheReadTokens += q.cacheReadTokens;
-        modelMap[q.model].totalTokens += q.totalTokens;
-        modelMap[q.model].cost += q.cost;
-        modelMap[q.model].queryCount += 1;
-      }
     }
   }
 
   sessions.sort((a, b) => b.totalTokens - a.totalTokens);
 
+  // Apply date range filter
+  const filteredSessions = filterSessionsByDateRange(sessions, { from, to });
+
+  // Build aggregations from filtered sessions
+  const dailyMap = {};
+  const modelMap = {};
+  const allPrompts = [];
+
+  for (const session of filteredSessions) {
+    const { date, inputTokens, outputTokens, cacheCreationTokens, cacheReadTokens, totalTokens, cost, queries: sessionQueries, sessionId, model: primaryModel } = session;
+
+    // Collect per-prompt data for "most expensive prompts"
+    let currentPrompt = null;
+    let promptInput = 0, promptOutput = 0, promptCacheCreation = 0, promptCacheRead = 0, promptCost = 0;
+    const flushPrompt = () => {
+      if (currentPrompt && (promptInput + promptOutput + promptCacheCreation + promptCacheRead) > 0) {
+        allPrompts.push({
+          prompt: currentPrompt.substring(0, 300),
+          inputTokens: promptInput,
+          outputTokens: promptOutput,
+          cacheCreationTokens: promptCacheCreation,
+          cacheReadTokens: promptCacheRead,
+          totalTokens: promptInput + promptOutput + promptCacheCreation + promptCacheRead,
+          cost: promptCost,
+          date,
+          sessionId,
+          model: primaryModel,
+        });
+      }
+    };
+    for (const q of sessionQueries) {
+      if (q.userPrompt && q.userPrompt !== currentPrompt) {
+        flushPrompt();
+        currentPrompt = q.userPrompt;
+        promptInput = 0;
+        promptOutput = 0;
+        promptCacheCreation = 0;
+        promptCacheRead = 0;
+        promptCost = 0;
+      }
+      promptInput += q.inputTokens;
+      promptOutput += q.outputTokens;
+      promptCacheCreation += q.cacheCreationTokens;
+      promptCacheRead += q.cacheReadTokens;
+      promptCost += q.cost;
+    }
+    flushPrompt();
+
+    // Daily
+    if (date !== 'unknown') {
+      if (!dailyMap[date]) {
+        dailyMap[date] = { date, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, cost: 0, sessions: 0, queries: 0 };
+      }
+      dailyMap[date].inputTokens += inputTokens;
+      dailyMap[date].outputTokens += outputTokens;
+      dailyMap[date].cacheCreationTokens += cacheCreationTokens;
+      dailyMap[date].cacheReadTokens += cacheReadTokens;
+      dailyMap[date].totalTokens += totalTokens;
+      dailyMap[date].cost += cost;
+      dailyMap[date].sessions += 1;
+      dailyMap[date].queries += sessionQueries.length;
+    }
+
+    // Model
+    for (const q of sessionQueries) {
+      if (q.model === '<synthetic>' || q.model === 'unknown') continue;
+      if (!modelMap[q.model]) {
+        modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, cost: 0, queryCount: 0 };
+      }
+      modelMap[q.model].inputTokens += q.inputTokens;
+      modelMap[q.model].outputTokens += q.outputTokens;
+      modelMap[q.model].cacheCreationTokens += q.cacheCreationTokens;
+      modelMap[q.model].cacheReadTokens += q.cacheReadTokens;
+      modelMap[q.model].totalTokens += q.totalTokens;
+      modelMap[q.model].cost += q.cost;
+      modelMap[q.model].queryCount += 1;
+    }
+  }
+
   // Build per-project aggregation
   const projectMap = {};
-  for (const session of sessions) {
+  for (const session of filteredSessions) {
     const proj = session.project;
     if (!projectMap[proj]) {
       projectMap[proj] = {
@@ -386,10 +404,10 @@ async function parseAllSessions() {
   allPrompts.sort((a, b) => b.totalTokens - a.totalTokens);
   const topPrompts = allPrompts.slice(0, 20);
 
-  const totalCacheCreationTokens = sessions.reduce((sum, s) => sum + s.cacheCreationTokens, 0);
-  const totalCacheReadTokens = sessions.reduce((sum, s) => sum + s.cacheReadTokens, 0);
-  const totalCost = sessions.reduce((sum, s) => sum + s.cost, 0);
-  const totalAllInput = sessions.reduce((sum, s) => sum + s.inputTokens + s.cacheCreationTokens + s.cacheReadTokens, 0);
+  const totalCacheCreationTokens = filteredSessions.reduce((sum, s) => sum + s.cacheCreationTokens, 0);
+  const totalCacheReadTokens = filteredSessions.reduce((sum, s) => sum + s.cacheReadTokens, 0);
+  const totalCost = filteredSessions.reduce((sum, s) => sum + s.cost, 0);
+  const totalAllInput = filteredSessions.reduce((sum, s) => sum + s.inputTokens + s.cacheCreationTokens + s.cacheReadTokens, 0);
 
   // What caching saved: cache reads at full input price minus what they actually cost
   const avgInputPrice = DEFAULT_PRICING.input;
@@ -398,11 +416,11 @@ async function parseAllSessions() {
   const cacheHitRate = totalAllInput > 0 ? totalCacheReadTokens / totalAllInput : 0;
 
   const grandTotals = {
-    totalSessions: sessions.length,
-    totalQueries: sessions.reduce((sum, s) => sum + s.queryCount, 0),
-    totalTokens: sessions.reduce((sum, s) => sum + s.totalTokens, 0),
-    totalInputTokens: sessions.reduce((sum, s) => sum + s.inputTokens, 0),
-    totalOutputTokens: sessions.reduce((sum, s) => sum + s.outputTokens, 0),
+    totalSessions: filteredSessions.length,
+    totalQueries: filteredSessions.reduce((sum, s) => sum + s.queryCount, 0),
+    totalTokens: filteredSessions.reduce((sum, s) => sum + s.totalTokens, 0),
+    totalInputTokens: filteredSessions.reduce((sum, s) => sum + s.inputTokens, 0),
+    totalOutputTokens: filteredSessions.reduce((sum, s) => sum + s.outputTokens, 0),
     totalCacheCreationTokens,
     totalCacheReadTokens,
     totalCost,
@@ -422,10 +440,10 @@ async function parseAllSessions() {
   }
 
   // Generate insights
-  const insights = generateInsights(sessions, allPrompts, grandTotals);
+  const insights = generateInsights(filteredSessions, allPrompts, grandTotals);
 
   return {
-    sessions,
+    sessions: filteredSessions,
     dailyUsage,
     modelBreakdown: Object.values(modelMap),
     projectBreakdown,
@@ -701,4 +719,4 @@ function fmt(n) {
   return n.toLocaleString();
 }
 
-module.exports = { parseAllSessions, parseJSONLFile, extractSessionData };
+module.exports = { parseAllSessions, parseJSONLFile, extractSessionData, filterSessionsByDateRange };
