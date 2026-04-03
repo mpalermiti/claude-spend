@@ -2106,16 +2106,16 @@ async function generateShareCard() {
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, W, H);
 
-  // Title — mono, cyan
+  // Title — mono, cyan, large
   ctx.fillStyle = accent;
-  ctx.font = '600 20px "JetBrains Mono", monospace';
-  ctx.fillText('claude-spend', 60, 60);
+  ctx.font = '700 32px "JetBrains Mono", monospace';
+  ctx.fillText('claude-spend', 60, 72);
 
   // Date range
   if (t.dateRange) {
-    ctx.fillStyle = textMuted;
-    ctx.font = '400 14px "JetBrains Mono", monospace';
-    ctx.fillText(t.dateRange.from + ' \u2014 ' + t.dateRange.to, 60, 88);
+    ctx.fillStyle = textPrimary;
+    ctx.font = '400 20px "JetBrains Mono", monospace';
+    ctx.fillText(t.dateRange.from + ' \u2014 ' + t.dateRange.to, 60, 108);
   }
 
   // Stats — 2x2 grid
@@ -2126,53 +2126,53 @@ async function generateShareCard() {
     { label: 'Est. API Cost', value: '$' + (t.totalCost || 0).toFixed(2) },
   ];
 
-  const gridY = 140;
-  const cellW = (W - 120 - 32) / 2;
-  const cellH = 150;
+  const gridY = 155;
+  const cellW = (W - 120 - 40) / 2;
+  const cellH = 165;
 
   stats.forEach((s, i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
-    const x = 60 + col * (cellW + 32);
-    const y = gridY + row * (cellH + 16);
+    const x = 60 + col * (cellW + 40);
+    const y = gridY + row * (cellH + 20);
 
     // Card
     ctx.fillStyle = surface;
     ctx.beginPath();
-    roundedRect(ctx, x, y, cellW, cellH, 10);
+    roundedRect(ctx, x, y, cellW, cellH, 12);
     ctx.fill();
 
     // Border
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    roundedRect(ctx, x, y, cellW, cellH, 10);
+    roundedRect(ctx, x, y, cellW, cellH, 12);
     ctx.stroke();
 
     // Label
-    ctx.fillStyle = textMuted;
-    ctx.font = '500 12px "JetBrains Mono", monospace';
-    ctx.fillText(s.label, x + 24, y + 36);
+    ctx.fillStyle = isDark ? '#8B8B8B' : '#5C5C5C';
+    ctx.font = '500 16px "JetBrains Mono", monospace';
+    ctx.fillText(s.label, x + 28, y + 42);
 
-    // Value — cyan
-    ctx.fillStyle = accent;
-    ctx.font = '700 44px "JetBrains Mono", monospace';
-    ctx.fillText(s.value, x + 24, y + 96);
+    // Value — big, high contrast
+    ctx.fillStyle = textPrimary;
+    ctx.font = '700 56px "JetBrains Mono", monospace';
+    ctx.fillText(s.value, x + 28, y + 112);
   });
 
   // Top insight
   const insights = DATA.insights || [];
   if (insights.length > 0) {
-    const insightY = gridY + 2 * (cellH + 16) + 20;
-    ctx.fillStyle = textMuted;
-    ctx.font = '400 13px "Outfit", system-ui';
-    wrapText(ctx, insights[0].title, 60, insightY, W - 120, 20);
+    const insightY = gridY + 2 * (cellH + 20) + 24;
+    ctx.fillStyle = isDark ? '#8B8B8B' : '#5C5C5C';
+    ctx.font = '400 18px "Outfit", system-ui';
+    wrapText(ctx, insights[0].title, 60, insightY, W - 120, 26);
   }
 
   // Footer
-  const footerY = H - 40;
-  ctx.fillStyle = textMuted;
-  ctx.font = '400 13px "JetBrains Mono", monospace';
+  const footerY = H - 44;
+  ctx.fillStyle = isDark ? '#5A5A5A' : '#9C9C9C';
+  ctx.font = '500 16px "JetBrains Mono", monospace';
   ctx.fillText('npx @mpalermiti/claude-spend', 60, footerY);
 
   ctx.textAlign = 'right';
