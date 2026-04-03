@@ -14,6 +14,7 @@ Usage:
 Options:
   --port <port>   Port to run dashboard on (default: 3456)
   --no-open       Don't auto-open browser
+  --mcp           Run as MCP server (stdio transport)
   --help, -h      Show this help message
 
 Examples:
@@ -23,42 +24,49 @@ Examples:
   process.exit(0);
 }
 
-const portIndex = args.indexOf('--port');
-const port = portIndex !== -1 ? parseInt(args[portIndex + 1], 10) : 3456;
-const noOpen = args.includes('--no-open');
+if (args.includes('--mcp')) {
+  require('./mcp').startMcpServer().catch(err => {
+    console.error('MCP server failed:', err);
+    process.exit(1);
+  });
+} else {
+  const portIndex = args.indexOf('--port');
+  const port = portIndex !== -1 ? parseInt(args[portIndex + 1], 10) : 3456;
+  const noOpen = args.includes('--no-open');
 
-if (isNaN(port)) {
-  console.error('Error: --port must be a number');
-  process.exit(1);
-}
-
-const app = createServer();
-
-const server = app.listen(port, async () => {
-  const url = `http://localhost:${port}`;
-  console.log(`\n  claude-spend dashboard running at ${url}\n`);
-
-  if (!noOpen) {
-    try {
-      const open = (await import('open')).default;
-      await open(url);
-    } catch {
-      console.log('  Could not auto-open browser. Open the URL manually.');
-    }
-  }
-});
-
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${port} is already in use. Try --port <other-port>`);
+  if (isNaN(port)) {
+    console.error('Error: --port must be a number');
     process.exit(1);
   }
-  throw err;
-});
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n  Shutting down...');
-  server.close();
-  process.exit(0);
-});
+  const app = createServer();
+
+  const server = app.listen(port, async () => {
+    const url = `http://localhost:${port}`;
+    console.log(`\n  claude-spend dashboard running at ${url}\n`);
+
+    if (!noOpen) {
+      try {
+        const open = (await import('open')).default;
+        await open(url);
+      } catch {
+        console.log('  Could not auto-open browser. Open the URL manually.');
+      }
+    }
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use. Try --port <other-port>`);
+      process.exit(1);
+    }
+    throw err;
+  });
+
+  // Graceful shutdown
+  process.on('SIGINT', () => {
+    console.log('\n  Shutting down...');
+    server.close();
+    process.exit(0);
+  });
+}
