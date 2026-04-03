@@ -17,7 +17,7 @@ Reads your local Claude Code session data (`~/.claude/`) and shows you exactly w
 **The dashboard gives you:**
 
 - Token usage over time with a 7-day moving average
-- Cost forecasting based on your lifetime daily average
+- Estimated API cost for any period with daily average breakdown
 - Per-session drill-downs with turn-by-turn cost curves and context growth
 - Tool usage breakdown (which tools Claude calls most)
 - 12 actionable insights (vague prompts, marathon sessions, model mismatch, etc.)

@@ -20,8 +20,10 @@ src/
 
 - **Date filtering**: `parseAllSessions({ from, to })` — parses all files, then filters by date before aggregating. All API endpoints and MCP tools accept `from`/`to`.
 - **Caching**: Server caches unfiltered results only. Filtered requests always reparse.
-- **Design system**: CSS variables in `:root` and `[data-theme="dark"]`. Charts read colors via `getComputedStyle`.
+- **Design system**: CSS variables in `:root` and `[data-theme="dark"]`. Light mode default. Charts read colors via `getComputedStyle`.
 - **Charts**: All rendered with Canvas API (no Chart.js dependency). Daily chart, model donut, turn cost, tool bars.
+- **Collapsible sections**: All sections toggle via `toggleSection()`. Charts open by default, others collapsed.
+- **Fonts**: Outfit (display) + JetBrains Mono (data/labels). Loaded from Google Fonts.
 
 ## Commands
 
