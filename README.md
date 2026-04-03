@@ -28,8 +28,6 @@ Reads your local Claude Code session data (`~/.claude/`) and shows you exactly w
 npx @mpalermiti/claude-spend
 ```
 
-Opens `http://localhost:3456`. That's it.
-
 **CLI flags:**
 
 ```
