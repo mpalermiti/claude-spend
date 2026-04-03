@@ -640,6 +640,78 @@
     flex-shrink: 0; transition: all 0.15s; float: right; margin: -4px -4px 0 0;
   }
   .info-popup-close:hover { background: var(--accent-light); color: var(--accent); }
+
+  /* ---- DATE FILTER ---- */
+  .date-filter {
+    margin-bottom: 24px;
+  }
+  .filter-presets {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    flex-wrap: wrap;
+  }
+  .preset {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .preset:hover {
+    color: var(--text-primary);
+    background: var(--accent-light);
+  }
+  .preset.active {
+    background: var(--accent);
+    color: white;
+  }
+  .custom-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .custom-range input[type="date"] {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--text-primary);
+    outline: none;
+  }
+  .custom-range input[type="date"]:focus {
+    border-color: var(--accent);
+  }
+  .custom-range-sep {
+    color: var(--text-tertiary);
+    font-size: 13px;
+  }
+  .custom-apply {
+    padding: 6px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    background: var(--accent);
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font);
+    cursor: pointer;
+  }
+  .custom-apply:hover {
+    opacity: 0.9;
+  }
 </style>
 </head>
 <body>
@@ -674,6 +746,25 @@
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
+    </div>
+  </div>
+
+  <!-- Date Filter -->
+  <div class="date-filter animate" id="dateFilter">
+    <div class="filter-presets">
+      <button class="preset active" data-preset="lifetime">Lifetime</button>
+      <button class="preset" data-preset="thisMonth">This Month</button>
+      <button class="preset" data-preset="lastMonth">Last Month</button>
+      <button class="preset" data-preset="thisWeek">This Week</button>
+      <button class="preset" data-preset="lastWeek">Last Week</button>
+      <button class="preset" data-preset="today">Today</button>
+      <button class="preset" data-preset="custom">Custom</button>
+    </div>
+    <div class="custom-range" id="customRange" style="display:none">
+      <input type="date" id="dateFrom">
+      <span class="custom-range-sep">to</span>
+      <input type="date" id="dateTo">
+      <button class="custom-apply" onclick="applyCustomRange()">Apply</button>
     </div>
   </div>
 
@@ -817,6 +908,8 @@
 let DATA = null;
 let currentSort = { key: 'total', dir: 'desc' };
 let searchQuery = '';
+let currentPreset = 'lifetime';
+let presets = {};
 
 // Theme toggle
 function toggleTheme() {
@@ -908,16 +1001,52 @@ function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-async function fetchData() {
+async function loadPresets() {
   try {
-    const res = await fetch('/api/data');
+    const res = await fetch('/api/presets');
+    presets = await res.json();
+  } catch (e) {
+    console.warn('Failed to load presets:', e);
+  }
+}
+
+function setPreset(preset) {
+  currentPreset = preset;
+  document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector('[data-preset="' + preset + '"]');
+  if (btn) btn.classList.add('active');
+
+  const customRange = document.getElementById('customRange');
+  if (customRange) customRange.style.display = preset === 'custom' ? 'flex' : 'none';
+
+  if (preset !== 'custom') {
+    fetchDataWithRange(presets[preset] || {});
+  }
+}
+
+function applyCustomRange() {
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  if (from || to) {
+    fetchDataWithRange({ from, to });
+  }
+}
+
+async function fetchDataWithRange(range) {
+  const params = new URLSearchParams();
+  if (range.from) params.set('from', range.from);
+  if (range.to) params.set('to', range.to);
+  const url = '/api/data' + (params.toString() ? '?' + params : '');
+
+  try {
+    const res = await fetch(url);
     const json = await res.json();
     if (!res.ok || json.error) {
-      showError(json.error || `Server returned ${res.status}`);
+      showError(json.error || 'Server returned ' + res.status);
       return;
     }
     if (!json.totals || !json.sessions) {
-      showError('No session data found. Make sure you have used Claude Code at least once.');
+      showError('No session data found.');
       return;
     }
     DATA = json;
@@ -925,6 +1054,11 @@ async function fetchData() {
   } catch (err) {
     showError('Failed to load data: ' + err.message);
   }
+}
+
+async function fetchData() {
+  await loadPresets();
+  await fetchDataWithRange({});
 }
 function showError(msg) {
   document.getElementById('loading').style.display = 'none';
@@ -962,7 +1096,10 @@ async function refreshData() {
   const errEl = document.getElementById('error-display');
   if (errEl) errEl.remove();
   try { await fetch('/api/refresh'); } catch {}
-  await fetchData();
+  const range = (currentPreset === 'custom')
+    ? { from: document.getElementById('dateFrom').value, to: document.getElementById('dateTo').value }
+    : (presets[currentPreset] || {});
+  await fetchDataWithRange(range);
 }
 
 function render() {
@@ -981,8 +1118,20 @@ function render() {
 // Stats
 function renderStats() {
   const t = DATA.totals;
-  const range = t.dateRange ? `${formatDate(t.dateRange.from)} - ${formatDate(t.dateRange.to)}` : '';
-  document.getElementById('dateRange').textContent = range;
+  const presetLabels = {
+    lifetime: 'All time',
+    today: 'Today',
+    thisWeek: 'This week',
+    lastWeek: 'Last week',
+    thisMonth: 'This month',
+    lastMonth: 'Last month',
+    custom: 'Custom range',
+  };
+  const filterLabel = presetLabels[currentPreset] || 'All time';
+  const rangeText = t.dateRange
+    ? filterLabel + ' \u00b7 ' + formatDate(t.dateRange.from) + ' \u2013 ' + formatDate(t.dateRange.to)
+    : filterLabel;
+  document.getElementById('dateRange').textContent = rangeText;
 
   const avgTokensPerMsg = t.totalQueries > 0 ? Math.round(t.totalTokens / t.totalQueries) : 0;
 
@@ -1789,6 +1938,10 @@ function downloadShareCard() {
 function closeShareCard() {
   document.getElementById('shareOverlay').classList.remove('open');
 }
+
+document.querySelectorAll('.preset').forEach(btn => {
+  btn.addEventListener('click', () => setPreset(btn.dataset.preset));
+});
 
 fetchData();
 window.addEventListener('resize', () => { if (DATA) { renderDailyChart(); renderModelChart(); } });
