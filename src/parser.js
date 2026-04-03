@@ -445,12 +445,15 @@ async function parseAllSessions({ from, to } = {}) {
 
   const forecast = computeForecast(dailyUsage);
 
+  const toolUsage = aggregateToolUsage(filteredSessions);
+
   return {
     sessions: filteredSessions,
     dailyUsage,
     modelBreakdown: Object.values(modelMap),
     projectBreakdown,
     topPrompts,
+    toolUsage,
     totals: grandTotals,
     forecast,
     insights,
@@ -744,4 +747,20 @@ function computeForecast(dailyUsage) {
   };
 }
 
-module.exports = { parseAllSessions, parseJSONLFile, extractSessionData, filterSessionsByDateRange, computeSessionDuration, computeForecast };
+function aggregateToolUsage(sessions) {
+  const toolMap = {};
+  for (const s of sessions) {
+    for (const q of s.queries) {
+      for (const t of (q.tools || [])) {
+        if (!toolMap[t]) toolMap[t] = { tool: t, count: 0, _sessions: new Set() };
+        toolMap[t].count++;
+        toolMap[t]._sessions.add(s.sessionId);
+      }
+    }
+  }
+  return Object.values(toolMap)
+    .map(t => ({ tool: t.tool, count: t.count, sessionCount: t._sessions.size }))
+    .sort((a, b) => b.count - a.count);
+}
+
+module.exports = { parseAllSessions, parseJSONLFile, extractSessionData, filterSessionsByDateRange, computeSessionDuration, computeForecast, aggregateToolUsage };

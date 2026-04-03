@@ -713,6 +713,50 @@
   .custom-apply:hover {
     opacity: 0.9;
   }
+
+  /* ---- TOOL USAGE ---- */
+  .tool-section { margin-bottom: 32px; }
+  .tool-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+  }
+  .tool-bar-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 60px;
+    gap: 12px;
+    align-items: center;
+    padding: 6px 0;
+  }
+  .tool-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tool-bar-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .tool-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+  .tool-count {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    color: var(--text-primary);
+  }
 </style>
 </head>
 <body>
@@ -801,6 +845,16 @@
   </div>
 
   <!-- Projects (temporarily hidden - TODO: fix prompt extraction) -->
+
+  <!-- Tool Usage -->
+  <div class="tool-section animate" id="toolSection" style="display:none">
+    <div class="section-header">
+      <div class="section-title">Tool Usage</div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-bars" id="toolBars"></div>
+    </div>
+  </div>
 
   <!-- Most Expensive Prompts -->
   <div class="top-prompts animate delay-4">
@@ -1113,6 +1167,7 @@ function render() {
   renderInsights();
   renderDailyChart();
   renderModelChart();
+  renderToolUsage();
   // renderProjectBreakdown(); // temporarily disabled
   renderTopPrompts();
   renderSessions();
@@ -1469,6 +1524,26 @@ function renderProjectBreakdown() {
     rows.push(summaryRow, drawerRow);
   });
   document.getElementById('projectsBody').innerHTML = rows.join('');
+}
+
+// Tool usage
+function renderToolUsage() {
+  const tools = DATA.toolUsage;
+  if (!tools || !tools.length) {
+    document.getElementById('toolSection').style.display = 'none';
+    return;
+  }
+  document.getElementById('toolSection').style.display = 'block';
+  const max = tools[0].count;
+
+  document.getElementById('toolBars').innerHTML = tools.slice(0, 15).map(t => {
+    const pct = (t.count / max * 100).toFixed(1);
+    return '<div class="tool-bar-row">' +
+      '<span class="tool-name">' + escapeHtml(t.tool) + '</span>' +
+      '<div class="tool-bar-track"><div class="tool-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<span class="tool-count">' + fmtFull(t.count) + '</span>' +
+      '</div>';
+  }).join('');
 }
 
 // Top prompts
