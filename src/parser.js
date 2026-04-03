@@ -701,4 +701,4 @@ function fmt(n) {
   return n.toLocaleString();
 }
 
-module.exports = { parseAllSessions };
+module.exports = { parseAllSessions, parseJSONLFile, extractSessionData };

@@ -1,0 +1,4 @@
+{"type":"user","message":{"role":"user","content":"Fix the login bug"},"timestamp":"2026-04-01T10:00:00Z"}
+{"type":"assistant","message":{"role":"assistant","model":"claude-opus-4-6","usage":{"input_tokens":5000,"output_tokens":1200,"cache_creation_input_tokens":3000,"cache_read_input_tokens":2000},"content":[{"type":"tool_use","name":"Read","id":"tu1","input":{"file_path":"src/auth.js"}},{"type":"text","text":"I found the bug."}]},"timestamp":"2026-04-01T10:01:00Z"}
+{"type":"user","message":{"role":"user","content":"Great, now fix it"},"timestamp":"2026-04-01T10:02:00Z"}
+{"type":"assistant","message":{"role":"assistant","model":"claude-opus-4-6","usage":{"input_tokens":8000,"output_tokens":2500,"cache_creation_input_tokens":1000,"cache_read_input_tokens":6000},"content":[{"type":"tool_use","name":"Edit","id":"tu2","input":{}},{"type":"text","text":"Fixed the bug."}]},"timestamp":"2026-04-01T10:03:00Z"}

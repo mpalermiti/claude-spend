@@ -7,7 +7,8 @@
     "claude-spend": "src/index.js"
   },
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "test": "jest --verbose"
   },
   "keywords": [
     "claude",
@@ -28,5 +29,8 @@
   "dependencies": {
     "express": "^4.21.0",
     "open": "^10.1.0"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0"
   }
 }
