@@ -241,6 +241,16 @@ async function parseAllSessions({ from, to } = {}) {
 
   sessions.sort((a, b) => b.totalTokens - a.totalTokens);
 
+  // Build lifetime daily cost for forecast (before filtering)
+  const lifetimeDailyMap = {};
+  for (const s of sessions) {
+    if (s.date && s.date !== 'unknown') {
+      if (!lifetimeDailyMap[s.date]) lifetimeDailyMap[s.date] = { cost: 0 };
+      lifetimeDailyMap[s.date].cost += s.cost;
+    }
+  }
+  const lifetimeDailyUsage = Object.entries(lifetimeDailyMap).map(([date, v]) => ({ date, cost: v.cost }));
+
   // Apply date range filter
   const filteredSessions = filterSessionsByDateRange(sessions, { from, to });
 
@@ -443,7 +453,12 @@ async function parseAllSessions({ from, to } = {}) {
   // Generate insights
   const insights = generateInsights(filteredSessions, allPrompts, grandTotals);
 
-  const forecast = computeForecast(dailyUsage);
+  // Forecast always uses lifetime data for stable projection
+  const forecast = computeForecast(lifetimeDailyUsage);
+  // Also include current period rate for context
+  const periodForecast = computeForecast(dailyUsage);
+  forecast.periodAvgDailyCost = periodForecast.avgDailyCost;
+  forecast.periodDaysOfData = periodForecast.daysOfData;
 
   const toolUsage = aggregateToolUsage(filteredSessions);
 
