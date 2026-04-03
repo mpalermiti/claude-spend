@@ -176,11 +176,7 @@
   /* ---- STAT CARDS ---- */
   .stats-row {
     display: grid; grid-template-columns: repeat(5, 1fr);
-    gap: 1px; margin-bottom: 28px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
+    gap: 12px; margin-bottom: 28px;
   }
   @media (max-width: 960px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 600px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
@@ -188,11 +184,12 @@
   .stat-card {
     background: var(--surface);
     padding: 18px 20px; position: relative;
-    border: none; border-radius: 0;
+    border: 1px solid var(--border); border-radius: var(--radius);
     box-shadow: none;
-    transition: background 0.15s;
+    transition: border-color 0.15s;
+    overflow: visible;
   }
-  .stat-card:hover { background: var(--accent-light); }
+  .stat-card:hover { border-color: var(--border-strong); }
   .stat-label {
     font-size: 11px; font-weight: 500; color: var(--text-tertiary);
     margin-bottom: 8px; letter-spacing: 0.03em;
