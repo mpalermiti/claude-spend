@@ -61,22 +61,7 @@
     --glow: rgba(14,165,233,0.04);
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #09090B;
-      --surface: #111113;
-      --surface-raised: #18181B;
-      --text-primary: #EAEAEA;
-      --text-secondary: #8B8B8B;
-      --text-tertiary: #5A5A5A;
-      --border: #1F1F23;
-      --border-strong: #2A2A2E;
-      --accent-light: rgba(14,165,233,0.08);
-
-      --dot-color: rgba(255,255,255,0.03);
-      --glow: rgba(14,165,233,0.04);
-    }
-  }
+  /* Dark mode only via explicit toggle — light mode is default */
 
   body {
     font-family: var(--font);
@@ -186,10 +171,7 @@
   .theme-toggle .icon-moon { display: block; }
   [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
   [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
-    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
-  }
+  /* Dark mode icon swap only via explicit data-theme attribute */
 
   /* ---- STAT CARDS ---- */
   .stats-row {
@@ -888,15 +870,6 @@
   <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
 
-  <!-- Insights -->
-  <div id="insightsSection" class="collapsible-section insights-section" style="display:none">
-    <div class="section-header animate" onclick="toggleSection(this)">
-      <div class="section-chevron"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4.5 3L7.5 6L4.5 9"/></svg></div>
-      <div class="section-title">Insights</div>
-    </div>
-    <div class="section-body" id="insightsList"></div>
-  </div>
-
   <!-- Charts -->
   <div class="collapsible-section section-open">
     <div class="section-header animate delay-3" onclick="toggleSection(this)">
@@ -923,6 +896,15 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Insights -->
+  <div id="insightsSection" class="collapsible-section insights-section" style="display:none">
+    <div class="section-header animate" onclick="toggleSection(this)">
+      <div class="section-chevron"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4.5 3L7.5 6L4.5 9"/></svg></div>
+      <div class="section-title">Insights</div>
+    </div>
+    <div class="section-body" id="insightsList"></div>
   </div>
 
   <!-- Tool Usage -->
@@ -1001,10 +983,6 @@
   </div><!-- /section-body -->
   </div><!-- /sessions-section -->
 
-  <div class="footer">
-    All data stays local. Nothing sent anywhere.<br>
-    Forked from <a href="https://github.com/writetoaniketparihar-collab/claude-spend">claude-spend</a> by Aniket Parihar
-  </div>
 </div>
 
 <!-- How Tokens Work info popup -->
