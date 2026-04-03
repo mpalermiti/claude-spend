@@ -1,51 +1,79 @@
-# claude-spend
+# @mpalermiti/claude-spend
 
 See where your Claude Code tokens go. One command, zero setup.
 
-## Problem
+Parses your local `~/.claude/` session data and serves a dashboard with token usage analytics, cost estimates, date filtering, and actionable insights.
 
- I've been using Claude Code every day for 3 months. I hit the usage limit almost daily, but had zero visibility into which prompts were eating my tokens. So I built claude-spend. One command, zero setup. 
+## Quick Start
 
-## How does it look
-
-
-<img width="1910" height="966" alt="Screenshot 2026-02-18 092727" src="https://github.com/user-attachments/assets/11cc7149-d4dd-4e44-a3a0-0b48e935b7bc" />
-
-<img width="1906" height="966" alt="Screenshot 2026-02-18 093529" src="https://github.com/user-attachments/assets/537c3611-5794-41d2-864e-e368e6949812" />
-
-<img width="1908" height="969" alt="Screenshot 2026-02-18 093647" src="https://github.com/user-attachments/assets/aaaa8ce5-2025-407d-8596-ea1965748691" />
-
-<img width="1908" height="969" alt="Screenshot 2026-02-18 093647" src="https://github.com/user-attachments/assets/a9fde5e2-6e52-4bae-9b96-03655109aef6" />
-
-
-
-## Install
-
-```
-npx claude-spend
+```bash
+npx @mpalermiti/claude-spend
 ```
 
-That's it. Opens a dashboard in your browser.
+Opens a local dashboard at `http://localhost:3456`. All data stays on your machine.
 
+## Features
 
-## What it does
+- **Date range filtering** -- Lifetime, This Month, Last Month, This Week, Last Week, Today, or custom range
+- **Cost forecasting** -- Projected monthly spend based on daily averages
+- **7-day moving average** -- Trend line overlaid on daily usage chart
+- **Session duration** -- How long each conversation lasted
+- **Tool usage analytics** -- Which tools (Read, Edit, Bash, Grep, Agent) are called most
+- **Per-session drill-down** -- Turn-by-turn cost curve, context growth, token breakdown
+- **12 insights** -- Actionable suggestions: vague prompts, context growth, marathon sessions, model mismatch, and more
+- **Dark mode** -- Toggle or auto-detect from system preference
+- **MCP server** -- Query spend data programmatically from Claude or any MCP client
+- **Share card** -- Generate a PNG summary of your stats
 
-- Reads your local Claude Code session files (nothing leaves your machine)
-- Shows token usage per conversation, per day, and per model
-- Surfaces insights like which prompts cost the most and usage patterns
-
-
-## Options
+## CLI Options
 
 ```
-claude-spend --port 8080   # custom port (default: 3456)
-claude-spend --no-open     # don't auto-open browser
+npx @mpalermiti/claude-spend [options]
+
+Options:
+  --port <port>   Port for dashboard (default: 3456)
+  --no-open       Don't auto-open browser
+  --mcp           Run as MCP server (stdio transport)
+  --help, -h      Show help
 ```
 
-## Privacy
+## MCP Server
 
-All data stays local. claude-spend reads files from `~/.claude/` on your machine and serves a dashboard on localhost. No data is sent anywhere.
+Run as an MCP server so Claude can query your spend data mid-conversation:
 
-## License
+```bash
+npx @mpalermiti/claude-spend --mcp
+```
 
-MIT
+Add to your Claude Code settings (`~/.claude/settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "claude-spend": {
+      "command": "npx",
+      "args": ["@mpalermiti/claude-spend", "--mcp"]
+    }
+  }
+}
+```
+
+**Available tools:**
+
+| Tool | Description |
+|------|-------------|
+| `get_spend_summary` | Token usage and cost totals for a time period |
+| `get_top_sessions` | Most expensive sessions, filterable by project/date |
+| `get_project_breakdown` | Per-project token and cost breakdown |
+| `get_insights` | Generated insights about usage patterns |
+| `get_daily_trend` | Daily usage data for trend analysis |
+
+All tools accept optional `from` and `to` parameters (YYYY-MM-DD).
+
+## How It Works
+
+Reads JSONL session files from `~/.claude/projects/` -- the same data Claude Code writes locally. Parses token counts, calculates API-equivalent costs, aggregates by day/model/project, and generates insights. Nothing is sent anywhere.
+
+## Credits
+
+Forked from [claude-spend](https://github.com/writetoaniketparihar-collab/claude-spend) by Aniket Parihar. MIT License.

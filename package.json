@@ -1,7 +1,7 @@
 {
-  "name": "claude-spend",
-  "version": "1.0.6",
-  "description": "See where your Claude Code tokens go. One command, zero setup.",
+  "name": "@mpalermiti/claude-spend",
+  "version": "2.0.0",
+  "description": "See where your Claude Code tokens go. Deep analytics, date filtering, MCP server.",
   "main": "src/index.js",
   "bin": {
     "claude-spend": "src/index.js"
@@ -20,11 +20,11 @@
     "spend",
     "cost"
   ],
-  "author": "Aniket Parihar",
+  "author": "Michael Palermiti",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/writetoaniketparihar-collab/claude-spend.git"
+    "url": "https://github.com/mpalermiti/claude-spend.git"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
