@@ -8,8 +8,6 @@ npx @mpalermiti/claude-spend
 
 ![claude-spend dashboard](docs/screenshot.png)
 
-![claude-spend expanded — heatmap, insights, tool usage](docs/screenshot-expanded.png)
-
 Reads your local Claude Code session data (`~/.claude/`) and shows you exactly where your tokens go. Everything runs locally. Nothing leaves your machine.
 
 ## The ROI Multiplier
