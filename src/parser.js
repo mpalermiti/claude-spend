@@ -462,6 +462,31 @@ async function parseAllSessions({ from, to } = {}) {
 
   const toolUsage = aggregateToolUsage(filteredSessions);
 
+  // Compute previous period cost for trend comparison
+  let trend = null;
+  if (from && to) {
+    const fromDate = new Date(from + 'T00:00:00');
+    const toDate = new Date(to + 'T23:59:59');
+    const periodMs = toDate.getTime() - fromDate.getTime();
+    const periodDays = Math.max(1, Math.round(periodMs / (1000 * 60 * 60 * 24)));
+    const prevTo = new Date(fromDate.getTime() - 1000 * 60 * 60 * 24);
+    const prevFrom = new Date(prevTo.getTime() - periodMs);
+    const prevFromStr = prevFrom.toISOString().split('T')[0];
+    const prevToStr = prevTo.toISOString().split('T')[0];
+    const prevSessions = filterSessionsByDateRange(sessions, { from: prevFromStr, to: prevToStr });
+    const prevCost = prevSessions.reduce((sum, s) => sum + s.cost, 0);
+    const prevTokens = prevSessions.reduce((sum, s) => sum + s.totalTokens, 0);
+    trend = {
+      currentCost: grandTotals.totalCost,
+      previousCost: prevCost,
+      currentTokens: grandTotals.totalTokens,
+      previousTokens: prevTokens,
+      periodDays,
+      costDelta: prevCost > 0 ? ((grandTotals.totalCost - prevCost) / prevCost) * 100 : null,
+      tokenDelta: prevTokens > 0 ? ((grandTotals.totalTokens - prevTokens) / prevTokens) * 100 : null,
+    };
+  }
+
   return {
     sessions: filteredSessions,
     dailyUsage,
@@ -473,6 +498,7 @@ async function parseAllSessions({ from, to } = {}) {
     forecast,
     insights,
     warnings,
+    trend,
   };
 }
 

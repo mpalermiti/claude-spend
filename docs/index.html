@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>claude-spend — See where your Claude Code tokens go</title>
+<meta name="description" content="Token usage analytics for Claude Code. See your ROI, find waste, share your stats. One command, no setup.">
+<meta property="og:title" content="claude-spend">
+<meta property="og:description" content="Token usage analytics for Claude Code. See your ROI multiplier instantly.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FAFAF9;
+    --surface: #FFFFFF;
+    --surface-raised: #FFFFFF;
+    --text: #18181B;
+    --text-secondary: #52525B;
+    --text-muted: #A1A1AA;
+    --border: #E4E4E7;
+    --border-strong: #D4D4D8;
+    --accent: #10B981;
+    --accent-light: #ECFDF5;
+    --cost: #F43F5E;
+    --chart-2: #8B5CF6;
+    --chart-3: #06B6D4;
+    --chart-5: #EC4899;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --mono: 'JetBrains Mono', 'SF Mono', monospace;
+    --font: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --dot-color: rgba(0,0,0,0.03);
+    --glow: rgba(16,185,129,0.05);
+  }
+
+  [data-theme="dark"] {
+    --bg: #0A0A0C;
+    --surface: #151517;
+    --surface-raised: #1E1E22;
+    --text: #EDEDED;
+    --text-secondary: #9CA3AF;
+    --text-muted: #6B7280;
+    --border: #27272A;
+    --border-strong: #3F3F46;
+    --accent-light: rgba(16,185,129,0.1);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
+    --dot-color: rgba(255,255,255,0.035);
+    --glow: rgba(16,185,129,0.04);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Dot grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Top glow */
+  body::after {
+    content: '';
+    position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 500px;
+    background: radial-gradient(ellipse, var(--glow) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); filter: blur(2px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 16px rgba(16,185,129,0.08), 0 0 48px rgba(16,185,129,0.04); }
+    50% { box-shadow: 0 0 24px rgba(16,185,129,0.15), 0 0 64px rgba(16,185,129,0.06); }
+  }
+  .fade { opacity: 0; animation: fadeIn 0.45s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .d1 { animation-delay: 0.06s; }
+  .d2 { animation-delay: 0.12s; }
+  .d3 { animation-delay: 0.18s; }
+  .d4 { animation-delay: 0.24s; }
+  .d5 { animation-delay: 0.30s; }
+  .d6 { animation-delay: 0.36s; }
+
+  /* ---- NAV ---- */
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+  .nav-brand {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+  }
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+  .nav-link {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+  .nav-link:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .theme-toggle {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-muted); width: 32px; height: 32px;
+    border-radius: var(--radius-sm); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; font-size: 14px;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  /* ---- HERO ---- */
+  .hero {
+    text-align: center;
+    padding: 72px 0 48px;
+    position: relative;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -20px; left: 50%; transform: translateX(-50%);
+    width: 500px; height: 300px;
+    background: radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-title {
+    font-family: var(--mono);
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.03em;
+    margin-bottom: 12px;
+  }
+  .hero-title span { color: var(--accent); }
+  .hero-tagline {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto 32px;
+    line-height: 1.5;
+  }
+
+  /* Install block */
+  .install-block {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    animation: glow 4s ease-in-out infinite;
+  }
+  .install-block:hover { border-color: var(--accent); }
+  .install-block::before {
+    content: '$';
+    color: var(--accent);
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .install-cmd {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    user-select: all;
+  }
+  .install-copy {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--mono);
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+  }
+  .install-block:hover .install-copy { color: var(--accent); border-color: var(--accent); }
+
+  .hero-note {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+
+  /* ---- ROI ---- */
+  .roi {
+    text-align: center;
+    padding: 32px 0 48px;
+  }
+  .roi-card {
+    display: inline-block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 40px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .roi-card:hover { border-color: var(--border-strong); }
+  .roi-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; left: 50%; transform: translateX(-50%);
+    width: 300px; height: 150px;
+    background: radial-gradient(ellipse, rgba(16,185,129,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .roi-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .roi-value {
+    font-family: var(--mono);
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .roi-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 380px;
+  }
+
+  /* ---- SECTION HEADERS ---- */
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    letter-spacing: 0.04em;
+    margin-bottom: 16px;
+  }
+  .section-title::before {
+    content: '// ';
+    color: var(--accent);
+    opacity: 0.4;
+  }
+
+  /* ---- FEATURES ---- */
+  .features { padding: 16px 0 48px; }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 700px) { .features-grid { grid-template-columns: 1fr; } }
+
+  .feature {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.15s, transform 0.2s, box-shadow 0.2s;
+  }
+  .feature:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .feature.green { border-top-color: var(--accent); }
+  .feature.violet { border-top-color: var(--chart-2); }
+  .feature.cyan { border-top-color: var(--chart-3); }
+  .feature.pink { border-top-color: var(--chart-5); }
+  .feature.amber { border-top-color: #F59E0B; }
+  .feature.rose { border-top-color: var(--cost); }
+
+  .feature h3 {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .feature p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* ---- SCREENSHOT ---- */
+  .screenshot-section { padding: 0 0 48px; }
+  .screenshot-wrap {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+  }
+  .screenshot-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .screenshot-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .screenshot-dot.r { background: #EF4444; }
+  .screenshot-dot.y { background: #F59E0B; }
+  .screenshot-dot.g { background: #10B981; }
+  .screenshot-url {
+    flex: 1; text-align: center;
+    font-family: var(--mono); font-size: 11px; color: var(--text-muted);
+  }
+  .screenshot-body {
+    min-height: 300px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); font-family: var(--mono); font-size: 13px;
+  }
+  .screenshot-body img { width: 100%; display: block; }
+
+  /* ---- STEPS ---- */
+  .steps-section { padding: 0 0 48px; }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: 0.4;
+    margin-bottom: 8px;
+  }
+  .step h3 {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .step p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .step code {
+    background: var(--accent-light);
+    padding: 2px 6px; border-radius: 4px;
+    font-family: var(--mono); font-size: 11px;
+    font-weight: 600; color: var(--accent);
+  }
+
+  /* ---- FOOTER ---- */
+  .footer {
+    padding: 24px 0;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .footer-left {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .footer-left a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .footer-left a:hover { text-decoration: underline; }
+  .footer-links { display: flex; gap: 16px; }
+  .footer-links a {
+    font-family: var(--mono); font-size: 12px; font-weight: 500;
+    color: var(--text-muted); text-decoration: none; transition: color 0.15s;
+  }
+  .footer-links a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Nav -->
+  <nav class="nav fade d1">
+    <a href="/" class="nav-brand">claude-spend</a>
+    <div class="nav-right">
+      <a href="https://github.com/mpalermiti/claude-spend" class="nav-link">GitHub</a>
+      <a href="https://www.npmjs.com/package/@mpalermiti/claude-spend" class="nav-link">npm</a>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span class="icon-moon">&#9789;</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1 class="hero-title fade d1">See where your <span>tokens</span> go</h1>
+    <p class="hero-tagline fade d2">Token analytics for Claude Code. Find waste, track your ROI, share your stats.</p>
+    <div class="fade d3">
+      <div class="install-block" onclick="copyInstall(this)">
+        <span class="install-cmd">npx @mpalermiti/claude-spend</span>
+        <span class="install-copy">copy</span>
+      </div>
+    </div>
+    <p class="hero-note fade d3">No setup. No config. Runs locally.</p>
+  </section>
+
+  <!-- ROI -->
+  <section class="roi fade d4">
+    <div class="roi-card">
+      <div class="roi-label">The number your subscription hides</div>
+      <div class="roi-value">26.7x</div>
+      <p class="roi-desc">See how much API-equivalent value you're extracting from your Claude Code plan.</p>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="section-title fade d4">Features</div>
+    <div class="features-grid">
+      <div class="feature green fade d4">
+        <h3>ROI multiplier</h3>
+        <p>Select your plan, see your multiplier. The stat that makes subscribers feel good.</p>
+      </div>
+      <div class="feature violet fade d4">
+        <h3>Session drill-down</h3>
+        <p>Per-turn cost chart, context growth curve, and where /clear would have saved you.</p>
+      </div>
+      <div class="feature cyan fade d5">
+        <h3>Activity heatmap</h3>
+        <p>Hour-by-day grid shows when you code. Peak time callout included.</p>
+      </div>
+      <div class="feature pink fade d5">
+        <h3>Trend comparison</h3>
+        <p>Filter by week or month and see cost delta vs the previous period.</p>
+      </div>
+      <div class="feature amber fade d5">
+        <h3>Smart insights</h3>
+        <p>12 automated insights flag vague prompts, long sessions, and model waste.</p>
+      </div>
+      <div class="feature rose fade d6">
+        <h3>Share card</h3>
+        <p>One-click PNG export optimized for social. The ROI badge is the hook.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshot -->
+  <section class="screenshot-section fade d5">
+    <div class="section-title">Dashboard</div>
+    <div class="screenshot-wrap">
+      <div class="screenshot-bar">
+        <div class="screenshot-dot r"></div>
+        <div class="screenshot-dot y"></div>
+        <div class="screenshot-dot g"></div>
+        <div class="screenshot-url">localhost:3456</div>
+      </div>
+      <div class="screenshot-body">
+        <img src="screenshot.png" alt="claude-spend dashboard">
+      </div>
+    </div>
+  </section>
+
+  <!-- Steps -->
+  <section class="steps-section fade d5">
+    <div class="section-title">How it works</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Run one command</h3>
+        <p><code>npx @mpalermiti/claude-spend</code> reads your local session data. Nothing leaves your machine.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Explore your data</h3>
+        <p>Filter by date, drill into sessions, see per-turn costs, project breakdowns, and tool usage.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Share your stats</h3>
+        <p>Generate a share card showing your ROI multiplier, token usage, and peak coding hours.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer fade d6">
+    <div class="footer-left">
+      <a href="https://github.com/mpalermiti/claude-spend">claude-spend</a> v3.0.0 &middot; by <a href="https://michaelp.ai">michaelp.ai</a>
+    </div>
+    <div class="footer-links">
+      <a href="https://www.npmjs.com/package/@mpalermiti/claude-spend">npm</a>
+      <a href="https://github.com/mpalermiti/claude-spend">GitHub</a>
+      <a href="https://github.com/mpalermiti/claude-spend/issues">Issues</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+function copyInstall(el) {
+  navigator.clipboard.writeText('npx @mpalermiti/claude-spend').then(function() {
+    var btn = el.querySelector('.install-copy');
+    btn.textContent = 'copied!';
+    setTimeout(function() { btn.textContent = 'copy'; }, 2000);
+  });
+}
+function toggleTheme() {
+  var html = document.documentElement;
+  var current = html.getAttribute('data-theme');
+  var next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  var icon = document.querySelector('.icon-moon');
+  icon.textContent = next === 'dark' ? '\u2600' : '\u263D';
+}
+</script>
+</body>
+</html>
