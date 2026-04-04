@@ -13,7 +13,7 @@ src/
 ├── parser.js         Core parser — reads ~/.claude/projects/ JSONL, date filtering, trend comparison
 ├── mcp.js            MCP server (stdio) — 5 tools wrapping the parser
 └── public/
-    └── index.html    Single-file dashboard (~111KB) — all CSS/JS inline
+    └── index.html    Single-file dashboard (~115KB) — all CSS/JS inline
 ```
 
 ## Key Patterns

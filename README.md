@@ -23,7 +23,7 @@ This is the stat that makes you feel good about your subscription. And the one y
 | Feature | Original | v3 |
 |---------|----------|-----|
 | Token usage chart | Basic bar chart | Stacked bars + 7-day moving average + cumulative cost line |
-| Date filtering | None | 7 presets + custom range |
+| Date filtering | None | 6 presets + custom range |
 | Cost estimation | None | Full API-equivalent cost with per-model pricing |
 | ROI multiplier | None | Plan-aware, shows Nx value vs subscription |
 | Trend comparison | None | Cost/token delta vs previous equivalent period |

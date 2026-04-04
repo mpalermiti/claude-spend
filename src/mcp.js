@@ -6,7 +6,7 @@ const { parseAllSessions } = require('./parser');
 function createMcpServer() {
   const server = new McpServer({
     name: 'claude-spend',
-    version: '2.0.0',
+    version: '3.0.1',
   });
 
   // Tool 1: Spend summary for a time period
