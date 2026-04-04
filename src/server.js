@@ -41,6 +41,11 @@ function createServer() {
     }
   });
 
+  app.get('/api/version', (req, res) => {
+    const pkg = require('../package.json');
+    res.json({ version: pkg.version });
+  });
+
   app.get('/api/presets', (req, res) => {
     const now = new Date();
     const today = now.toISOString().split('T')[0];

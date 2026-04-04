@@ -1326,7 +1326,7 @@
       <div class="footer-shortcut"><kbd>Esc</kbd> close</div>
     </div>
     <div class="footer-brand">
-      <a href="https://github.com/mpalermiti/claude-spend">claude-spend</a> v3.0.0 &middot; <a href="https://michaelp.ai">michaelp.ai</a>
+      <a href="https://github.com/mpalermiti/claude-spend">claude-spend</a> <span id="appVersion"></span> &middot; <a href="https://michaelp.ai">michaelp.ai</a>
     </div>
   </div>
 
@@ -1609,6 +1609,12 @@ async function fetchDataWithRange(range) {
 }
 
 async function fetchData() {
+  try {
+    var vRes = await fetch('/api/version');
+    var vJson = await vRes.json();
+    var el = document.getElementById('appVersion');
+    if (el && vJson.version) el.textContent = 'v' + vJson.version;
+  } catch {}
   await loadPresets();
   await fetchDataWithRange({});
 }
