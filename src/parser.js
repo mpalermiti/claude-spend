@@ -180,6 +180,26 @@ async function parseAllSessions({ from, to } = {}) {
       continue; // Skip directories we can't read
     }
 
+    // Also scan subagent files inside <sessionId>/subagents/ directories
+    try {
+      const subdirs = fs.readdirSync(dir).filter(d => {
+        try { return fs.statSync(path.join(dir, d)).isDirectory(); } catch { return false; }
+      });
+      for (const sub of subdirs) {
+        const subagentDir = path.join(dir, sub, 'subagents');
+        try {
+          const agentFiles = fs.readdirSync(subagentDir).filter(f => f.endsWith('.jsonl'));
+          for (const af of agentFiles) {
+            files.push(path.join(sub, 'subagents', af));
+          }
+        } catch {
+          // No subagents dir — skip
+        }
+      }
+    } catch {
+      // Skip if we can't read subdirs
+    }
+
     for (const file of files) {
       const filePath = path.join(dir, file);
       const sessionId = path.basename(file, '.jsonl');
