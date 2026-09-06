@@ -5,8 +5,37 @@ const readline = require('readline');
 
 const { costForUsage } = require('./pricing');
 
+// Claude Code's own override (CLAUDE_CONFIG_DIR) wins; default ~/.claude.
 function getClaudeDir() {
-  return path.join(os.homedir(), '.claude');
+  return process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+}
+
+// Every .jsonl under a directory tree (used for <session>/subagents/**).
+function walkJsonl(dir, out = []) {
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
+  for (const e of entries) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walkJsonl(p, out);
+    else if (e.name.endsWith('.jsonl')) out.push(p);
+  }
+  return out;
+}
+
+// Transcript files for one project dir, relative to it: <session>.jsonl plus
+// <session>/subagents/** — Claude Code nests workflow agents at
+// <session>/subagents/workflows/<wf>/agent-*.jsonl, not directly under subagents/.
+function listTranscripts(dir) {
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return []; }
+  const files = [];
+  for (const e of entries) {
+    if (e.isFile() && e.name.endsWith('.jsonl')) files.push(e.name);
+    else if (e.isDirectory()) {
+      for (const f of walkJsonl(path.join(dir, e.name, 'subagents'))) files.push(path.relative(dir, f));
+    }
+  }
+  return files;
 }
 
 async function parseJSONLFile(filePath) {
@@ -145,32 +174,7 @@ async function parseAllSessions({ from, to } = {}) {
 
   for (const projectDir of projectDirs) {
     const dir = path.join(projectsDir, projectDir);
-    let files;
-    try {
-      files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
-    } catch {
-      continue; // Skip directories we can't read
-    }
-
-    // Also scan subagent files inside <sessionId>/subagents/ directories
-    try {
-      const subdirs = fs.readdirSync(dir).filter(d => {
-        try { return fs.statSync(path.join(dir, d)).isDirectory(); } catch { return false; }
-      });
-      for (const sub of subdirs) {
-        const subagentDir = path.join(dir, sub, 'subagents');
-        try {
-          const agentFiles = fs.readdirSync(subagentDir).filter(f => f.endsWith('.jsonl'));
-          for (const af of agentFiles) {
-            files.push(path.join(sub, 'subagents', af));
-          }
-        } catch {
-          // No subagents dir — skip
-        }
-      }
-    } catch {
-      // Skip if we can't read subdirs
-    }
+    const files = listTranscripts(dir);
 
     for (const file of files) {
       const filePath = path.join(dir, file);
@@ -212,8 +216,20 @@ async function parseAllSessions({ from, to } = {}) {
         || queries.find(q => q.userPrompt)?.userPrompt
         || '(no prompt)';
 
+      // Subagent transcripts carry the parent's sessionId on every entry; the
+      // path (<parent>/subagents/...) is the fallback for older files.
+      const isSubagent = file.includes(`${path.sep}subagents${path.sep}`);
+      const parentSessionId = entries.find(e => e.sessionId)?.sessionId
+        || (isSubagent ? file.split(path.sep)[0] : sessionId);
+      const agentId = entries.find(e => e.agentId)?.agentId || null;
+      const cwd = entries.find(e => e.cwd)?.cwd || null;
+
       sessions.push({
         sessionId,
+        parentSessionId,
+        agentId,
+        isSubagent,
+        cwd,
         project: projectDir,
         date,
         timestamp: firstTimestamp,
