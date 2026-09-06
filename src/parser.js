@@ -3,45 +3,40 @@ const path = require('path');
 const os = require('os');
 const readline = require('readline');
 
-// Anthropic API pricing per token (from platform.claude.com/docs/en/about-claude/pricing)
-// Note: These are API-equivalent estimates. Claude Code subscription pricing differs.
-// Cache write = 1.25x base input (5-min TTL). Cache read = 0.1x base input.
-const MODEL_PRICING = {
-  // Opus 4.5, 4.6: $5/MTok in, $25/MTok out
-  'opus-4.5': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheRead: 0.50 / 1e6 },
-  'opus-4.6': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheRead: 0.50 / 1e6 },
-  // Opus 4.0, 4.1: $15/MTok in, $75/MTok out
-  'opus-4.0': { input: 15 / 1e6, output: 75 / 1e6, cacheWrite: 18.75 / 1e6, cacheRead: 1.50 / 1e6 },
-  'opus-4.1': { input: 15 / 1e6, output: 75 / 1e6, cacheWrite: 18.75 / 1e6, cacheRead: 1.50 / 1e6 },
-  // Sonnet 3.7, 4, 4.5, 4.6: $3/MTok in, $15/MTok out
-  sonnet: { input: 3 / 1e6, output: 15 / 1e6, cacheWrite: 3.75 / 1e6, cacheRead: 0.30 / 1e6 },
-  // Haiku 4.5: $1/MTok in, $5/MTok out
-  'haiku-4.5': { input: 1 / 1e6, output: 5 / 1e6, cacheWrite: 1.25 / 1e6, cacheRead: 0.10 / 1e6 },
-  // Haiku 3.5: $0.80/MTok in, $4/MTok out
-  'haiku-3.5': { input: 0.80 / 1e6, output: 4 / 1e6, cacheWrite: 1.00 / 1e6, cacheRead: 0.08 / 1e6 },
-};
-const DEFAULT_PRICING = MODEL_PRICING.sonnet;
+const { costForUsage } = require('./pricing');
+const { detectPlan } = require('./plan');
 
-function getPricing(model) {
-  if (!model) return DEFAULT_PRICING;
-  const m = model.toLowerCase();
-  if (m.includes('opus')) {
-    // Opus 4.5/4.6 are cheaper than Opus 4.0/4.1
-    if (m.includes('4-6') || m.includes('4.6')) return MODEL_PRICING['opus-4.6'];
-    if (m.includes('4-5') || m.includes('4.5')) return MODEL_PRICING['opus-4.5'];
-    if (m.includes('4-1') || m.includes('4.1')) return MODEL_PRICING['opus-4.1'];
-    return MODEL_PRICING['opus-4.0']; // Opus 4.0 and Opus 3
-  }
-  if (m.includes('sonnet')) return MODEL_PRICING.sonnet;
-  if (m.includes('haiku')) {
-    if (m.includes('4-5') || m.includes('4.5')) return MODEL_PRICING['haiku-4.5'];
-    return MODEL_PRICING['haiku-3.5'];
-  }
-  return DEFAULT_PRICING;
+// Claude Code's own override (CLAUDE_CONFIG_DIR) wins; default ~/.claude.
+function getClaudeDir() {
+  return process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
 }
 
-function getClaudeDir() {
-  return path.join(os.homedir(), '.claude');
+// Every .jsonl under a directory tree (used for <session>/subagents/**).
+function walkJsonl(dir, out = []) {
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
+  for (const e of entries) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walkJsonl(p, out);
+    else if (e.name.endsWith('.jsonl')) out.push(p);
+  }
+  return out;
+}
+
+// Transcript files for one project dir, relative to it: <session>.jsonl plus
+// <session>/subagents/** — Claude Code nests workflow agents at
+// <session>/subagents/workflows/<wf>/agent-*.jsonl, not directly under subagents/.
+function listTranscripts(dir) {
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return []; }
+  const files = [];
+  for (const e of entries) {
+    if (e.isFile() && e.name.endsWith('.jsonl')) files.push(e.name);
+    else if (e.isDirectory()) {
+      for (const f of walkJsonl(path.join(dir, e.name, 'subagents'))) files.push(path.relative(dir, f));
+    }
+  }
+  return files;
 }
 
 async function parseJSONLFile(filePath) {
@@ -63,6 +58,7 @@ async function parseJSONLFile(filePath) {
 function extractSessionData(entries) {
   const queries = [];
   let pendingUserMessage = null;
+  const byMessageId = new Map();
 
   for (const entry of entries) {
     if (entry.type === 'user' && entry.message?.role === 'user') {
@@ -87,17 +83,6 @@ function extractSessionData(entries) {
       const model = entry.message.model || 'unknown';
       if (model === '<synthetic>') continue;
 
-      const pricing = getPricing(model);
-      const inputTokens = usage.input_tokens || 0;
-      const cacheCreationTokens = usage.cache_creation_input_tokens || 0;
-      const cacheReadTokens = usage.cache_read_input_tokens || 0;
-      const outputTokens = usage.output_tokens || 0;
-      const totalTokens = inputTokens + cacheCreationTokens + cacheReadTokens + outputTokens;
-      const cost = (inputTokens * pricing.input)
-        + (cacheCreationTokens * pricing.cacheWrite)
-        + (cacheReadTokens * pricing.cacheRead)
-        + (outputTokens * pricing.output);
-
       const tools = [];
       if (Array.isArray(entry.message.content)) {
         for (const block of entry.message.content) {
@@ -105,7 +90,21 @@ function extractSessionData(entries) {
         }
       }
 
-      queries.push({
+      // Claude Code writes one line per content block of a single API response,
+      // repeating message.id and usage on each. Count the response once; merge tools.
+      const messageId = entry.message.id;
+      if (messageId && byMessageId.has(messageId)) {
+        byMessageId.get(messageId).tools.push(...tools);
+        continue;
+      }
+
+      const inputTokens = usage.input_tokens || 0;
+      const cacheReadTokens = usage.cache_read_input_tokens || 0;
+      const outputTokens = usage.output_tokens || 0;
+      const { cost, saved, cacheCreationTokens } = costForUsage(model, usage);
+      const totalTokens = inputTokens + cacheCreationTokens + cacheReadTokens + outputTokens;
+
+      const query = {
         userPrompt: pendingUserMessage?.text || null,
         userTimestamp: pendingUserMessage?.timestamp || null,
         assistantTimestamp: entry.timestamp,
@@ -116,8 +115,11 @@ function extractSessionData(entries) {
         outputTokens,
         totalTokens,
         cost,
+        saved,
         tools,
-      });
+      };
+      if (messageId) byMessageId.set(messageId, query);
+      queries.push(query);
     }
   }
 
@@ -140,11 +142,11 @@ async function parseAllSessions({ from, to } = {}) {
   const warnings = [];
 
   if (!fs.existsSync(claudeDir)) {
-    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {}, warnings: [{ type: 'missing-dir', message: 'Claude Code data directory not found at ' + claudeDir + '. Have you used Claude Code yet?' }] };
+    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {}, plan: detectPlan(), warnings: [{ type: 'missing-dir', message: 'Claude Code data directory not found at ' + claudeDir + '. Have you used Claude Code yet?' }] };
   }
 
   if (!fs.existsSync(projectsDir)) {
-    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {}, warnings: [{ type: 'no-projects', message: 'No project data found. Start a Claude Code conversation to generate usage data.' }] };
+    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {}, plan: detectPlan(), warnings: [{ type: 'no-projects', message: 'No project data found. Start a Claude Code conversation to generate usage data.' }] };
   }
 
   // Read history.jsonl for prompt display text
@@ -173,32 +175,7 @@ async function parseAllSessions({ from, to } = {}) {
 
   for (const projectDir of projectDirs) {
     const dir = path.join(projectsDir, projectDir);
-    let files;
-    try {
-      files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
-    } catch {
-      continue; // Skip directories we can't read
-    }
-
-    // Also scan subagent files inside <sessionId>/subagents/ directories
-    try {
-      const subdirs = fs.readdirSync(dir).filter(d => {
-        try { return fs.statSync(path.join(dir, d)).isDirectory(); } catch { return false; }
-      });
-      for (const sub of subdirs) {
-        const subagentDir = path.join(dir, sub, 'subagents');
-        try {
-          const agentFiles = fs.readdirSync(subagentDir).filter(f => f.endsWith('.jsonl'));
-          for (const af of agentFiles) {
-            files.push(path.join(sub, 'subagents', af));
-          }
-        } catch {
-          // No subagents dir — skip
-        }
-      }
-    } catch {
-      // Skip if we can't read subdirs
-    }
+    const files = listTranscripts(dir);
 
     for (const file of files) {
       const filePath = path.join(dir, file);
@@ -215,13 +192,14 @@ async function parseAllSessions({ from, to } = {}) {
       const queries = extractSessionData(entries);
       if (queries.length === 0) continue;
 
-      let inputTokens = 0, outputTokens = 0, cacheCreationTokens = 0, cacheReadTokens = 0, cost = 0;
+      let inputTokens = 0, outputTokens = 0, cacheCreationTokens = 0, cacheReadTokens = 0, cost = 0, saved = 0;
       for (const q of queries) {
         inputTokens += q.inputTokens;
         outputTokens += q.outputTokens;
         cacheCreationTokens += q.cacheCreationTokens;
         cacheReadTokens += q.cacheReadTokens;
         cost += q.cost;
+        saved += q.saved || 0;
       }
       const totalTokens = inputTokens + cacheCreationTokens + cacheReadTokens + outputTokens;
 
@@ -239,8 +217,20 @@ async function parseAllSessions({ from, to } = {}) {
         || queries.find(q => q.userPrompt)?.userPrompt
         || '(no prompt)';
 
+      // Subagent transcripts carry the parent's sessionId on every entry; the
+      // path (<parent>/subagents/...) is the fallback for older files.
+      const isSubagent = file.includes(`${path.sep}subagents${path.sep}`);
+      const parentSessionId = entries.find(e => e.sessionId)?.sessionId
+        || (isSubagent ? file.split(path.sep)[0] : sessionId);
+      const agentId = entries.find(e => e.agentId)?.agentId || null;
+      const cwd = entries.find(e => e.cwd)?.cwd || null;
+
       sessions.push({
         sessionId,
+        parentSessionId,
+        agentId,
+        isSubagent,
+        cwd,
         project: projectDir,
         date,
         timestamp: firstTimestamp,
@@ -254,6 +244,7 @@ async function parseAllSessions({ from, to } = {}) {
         cacheReadTokens,
         totalTokens,
         cost,
+        saved,
         durationMinutes: computeSessionDuration({ queries }),
       });
     }
@@ -440,10 +431,8 @@ async function parseAllSessions({ from, to } = {}) {
   const totalCost = filteredSessions.reduce((sum, s) => sum + s.cost, 0);
   const totalAllInput = filteredSessions.reduce((sum, s) => sum + s.inputTokens + s.cacheCreationTokens + s.cacheReadTokens, 0);
 
-  // What caching saved: cache reads at full input price minus what they actually cost
-  const avgInputPrice = DEFAULT_PRICING.input;
-  const avgCacheReadPrice = DEFAULT_PRICING.cacheRead;
-  const totalSaved = totalCacheReadTokens * (avgInputPrice - avgCacheReadPrice);
+  // What caching saved: cache reads priced at each model's full input rate minus the cache-read rate
+  const totalSaved = filteredSessions.reduce((sum, s) => sum + (s.saved || 0), 0);
   const cacheHitRate = totalAllInput > 0 ? totalCacheReadTokens / totalAllInput : 0;
 
   const grandTotals = {
@@ -519,6 +508,7 @@ async function parseAllSessions({ from, to } = {}) {
     insights,
     warnings,
     trend,
+    plan: detectPlan(),
   };
 }
 

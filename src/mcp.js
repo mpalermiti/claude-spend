@@ -2,11 +2,13 @@ const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const z = require('zod');
 const { parseAllSessions } = require('./parser');
+const { fetchQuota } = require('./quota');
+const { version } = require('../package.json');
 
 function createMcpServer() {
   const server = new McpServer({
     name: 'claude-spend',
-    version: '3.0.1',
+    version,
   });
 
   // Tool 1: Spend summary for a time period
@@ -34,6 +36,7 @@ function createMcpServer() {
             cacheHitRate: (t.cacheHitRate * 100).toFixed(1) + '%',
             cacheSavings: '$' + t.totalSaved.toFixed(2),
             dateRange: t.dateRange,
+            plan: data.plan,
           }, null, 2),
         }],
       };
@@ -117,6 +120,17 @@ function createMcpServer() {
     async ({ from, to }) => {
       const data = await parseAllSessions({ from, to });
       return { content: [{ type: 'text', text: JSON.stringify(data.dailyUsage, null, 2) }] };
+    }
+  );
+
+  // Tool 6: Subscription window utilization (Max/Pro rolling limits)
+  server.tool(
+    'get_quota',
+    'Get the signed-in subscription\'s rolling rate-limit utilization (5-hour session and 7-day weekly windows). Best-effort; returns available:false if the lookup fails.',
+    {},
+    async () => {
+      const q = await fetchQuota();
+      return { content: [{ type: 'text', text: JSON.stringify(q ? { available: true, ...q } : { available: false }, null, 2) }] };
     }
   );
 
