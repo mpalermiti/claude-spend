@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>claude-spend — See where your Claude Code tokens go</title>
-<meta name="description" content="Token usage analytics for Claude Code. See your ROI multiplier, find token waste, track cost trends, and share your stats. One command, no setup, runs locally.">
+<meta name="description" content="Token usage analytics for Claude Code. See your ROI multiplier and plan quota, find token waste, track cost trends, script it with --report, and share your stats. One command, no setup, runs locally.">
 <meta name="keywords" content="claude code, token usage, analytics, dashboard, anthropic, claude, spend tracker, ROI, API cost, developer tools, MCP server">
 <meta name="author" content="Michael Palermiti">
 <meta name="robots" content="index, follow">
@@ -501,7 +501,7 @@
     <div class="features-grid">
       <div class="feature green fade d4">
         <h3>ROI multiplier</h3>
-        <p>Select your plan, see your multiplier. The stat that makes subscribers feel good.</p>
+        <p>Detects your plan (Pro, Max 5x, Max 20x) from Claude Code's own config and shows your multiplier. The stat that makes subscribers feel good.</p>
       </div>
       <div class="feature violet fade d4">
         <h3>Session drill-down</h3>
@@ -522,6 +522,18 @@
       <div class="feature rose fade d6">
         <h3>Share card</h3>
         <p>One-click PNG export optimized for social. The ROI badge is the hook.</p>
+      </div>
+      <div class="feature cyan fade d6">
+        <h3>Quota lens</h3>
+        <p>Max plans meter rolling windows, not dollars. See your 5-hour and 7-day utilization next to the cost, in the CLI and over MCP.</p>
+      </div>
+      <div class="feature violet fade d6">
+        <h3>Report mode</h3>
+        <p><code>--report</code> prints markdown or JSON per project or per session id, subagents folded in. Built for nightly jobs and agents.</p>
+      </div>
+      <div class="feature green fade d6">
+        <h3>Honest numbers</h3>
+        <p>Counts each API response once, walks nested subagent transcripts, and prices the Claude 5 family and 1-hour cache writes correctly.</p>
       </div>
     </div>
   </section>
