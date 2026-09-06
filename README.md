@@ -12,7 +12,7 @@ Reads your local Claude Code session data (`~/.claude/`) and shows you exactly w
 
 ## The ROI Multiplier
 
-Your Claude Code subscription hides how much API-equivalent value you're actually using. claude-spend reveals it. Select your plan ($100 or $200/mo), and the dashboard shows your multiplier — how many times over you're getting your money's worth.
+Your Claude Code subscription hides how much API-equivalent value you're actually using. claude-spend reveals it. It detects your plan (Pro, Max 5x, Max 20x) from your local Claude Code config, and the dashboard shows your multiplier — how many times over you're getting your money's worth.
 
 > **26.7x** value from your $200/mo plan
 
@@ -36,7 +36,7 @@ This is the stat that makes you feel good about your subscription. And the one y
 | Share card | None | 1200x630 PNG with hero cost, ROI badge, stats |
 | Keyboard navigation | None | j/k navigate, Enter drill down, / search, d dark mode |
 | Dark mode | None | Full dark theme with CSS variable system |
-| MCP server | None | 5 tools — Claude can query its own spend |
+| MCP server | None | 6 tools — Claude can query its own spend and quota |
 | Design | Basic HTML table | Emerald identity, Plus Jakarta Sans + JetBrains Mono, dot grid, micro-interactions |
 
 ## Install
@@ -93,11 +93,28 @@ Add this to `~/.claude/settings.json` and Claude can query spend data during any
 }
 ```
 
-Five tools: `get_spend_summary`, `get_top_sessions`, `get_project_breakdown`, `get_insights`, `get_daily_trend`. All accept optional `from`/`to` date params.
+Six tools: `get_spend_summary`, `get_top_sessions`, `get_project_breakdown`, `get_insights`, `get_daily_trend`, `get_quota`. The first five accept optional `from`/`to` date params.
+
+## Report and Quota Modes
+
+For scripts, cron jobs, and agents that want numbers without a browser:
+
+```bash
+claude-spend --report --project myapp --trend-days 7          # markdown, grouped by project
+claude-spend --report --sessions build#1:<uuid>,build#2:<uuid>  # one row per session id
+claude-spend --report --from 2026-09-01 --to 2026-09-07 --json  # machine-readable
+claude-spend --quota                                            # "session 58% · weekly 28%"
+```
+
+`--sessions` takes `label:id` pairs (label optional). Subagent and workflow transcripts fold into the session that spawned them, so one row is the whole job. Launch a job with `claude -p ... --session-id $(uuidgen)` and you can report on exactly that job afterwards.
+
+`--quota` reads your subscription's rolling windows (5-hour session, 7-day weekly) from the same endpoint Claude Code's `/usage` uses. It is best-effort and macOS-first (the token lives in the login keychain); `--report` includes it unless you pass `--no-quota`.
 
 ## How It Works
 
 Claude Code writes JSONL session files to `~/.claude/projects/`. This tool parses them, calculates API-equivalent costs per model (with cache write/read pricing), aggregates by day/model/project, and generates insights. The cost numbers represent what the usage would cost at API rates — not what you pay on a subscription. That gap is your ROI.
+
+**Accuracy notes (3.1):** Claude Code writes one JSONL line per content block and repeats the usage on each, so responses are deduped by message id. Transcripts nested under `<session>/subagents/**` (including workflow agents) are read and attributed to their parent. Pricing covers the Claude 5 family (Opus 5, Sonnet 5, Fable 5.1) and prices 1-hour cache writes at 2× input, which is what Claude Code uses. Set `CLAUDE_CONFIG_DIR` to point at a different data dir.
 
 ## Origin
 
