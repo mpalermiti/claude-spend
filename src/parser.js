@@ -28,6 +28,7 @@ async function parseJSONLFile(filePath) {
 function extractSessionData(entries) {
   const queries = [];
   let pendingUserMessage = null;
+  const byMessageId = new Map();
 
   for (const entry of entries) {
     if (entry.type === 'user' && entry.message?.role === 'user') {
@@ -52,12 +53,6 @@ function extractSessionData(entries) {
       const model = entry.message.model || 'unknown';
       if (model === '<synthetic>') continue;
 
-      const inputTokens = usage.input_tokens || 0;
-      const cacheReadTokens = usage.cache_read_input_tokens || 0;
-      const outputTokens = usage.output_tokens || 0;
-      const { cost, saved, cacheCreationTokens } = costForUsage(model, usage);
-      const totalTokens = inputTokens + cacheCreationTokens + cacheReadTokens + outputTokens;
-
       const tools = [];
       if (Array.isArray(entry.message.content)) {
         for (const block of entry.message.content) {
@@ -65,7 +60,21 @@ function extractSessionData(entries) {
         }
       }
 
-      queries.push({
+      // Claude Code writes one line per content block of a single API response,
+      // repeating message.id and usage on each. Count the response once; merge tools.
+      const messageId = entry.message.id;
+      if (messageId && byMessageId.has(messageId)) {
+        byMessageId.get(messageId).tools.push(...tools);
+        continue;
+      }
+
+      const inputTokens = usage.input_tokens || 0;
+      const cacheReadTokens = usage.cache_read_input_tokens || 0;
+      const outputTokens = usage.output_tokens || 0;
+      const { cost, saved, cacheCreationTokens } = costForUsage(model, usage);
+      const totalTokens = inputTokens + cacheCreationTokens + cacheReadTokens + outputTokens;
+
+      const query = {
         userPrompt: pendingUserMessage?.text || null,
         userTimestamp: pendingUserMessage?.timestamp || null,
         assistantTimestamp: entry.timestamp,
@@ -78,7 +87,9 @@ function extractSessionData(entries) {
         cost,
         saved,
         tools,
-      });
+      };
+      if (messageId) byMessageId.set(messageId, query);
+      queries.push(query);
     }
   }
 
