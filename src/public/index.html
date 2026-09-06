@@ -1428,6 +1428,30 @@ function setCustomPlan(val) {
   }
 })();
 
+// Default the plan to the subscription tier the server detected from ~/.claude.json,
+// unless the user already picked one here. Runs on every data load; only acts once.
+var planDetectedApplied = false;
+function applyDetectedPlan(plan) {
+  if (planDetectedApplied || !plan) return;
+  planDetectedApplied = true;
+  var label = document.querySelector('.plan-selector label');
+  if (label && plan.label) label.textContent = 'Plan \u00b7 ' + plan.label + ' detected';
+  if (localStorage.getItem('claude-spend-plan') || !plan.monthlyUsd) return;
+  monthlyPlanCost = plan.monthlyUsd;
+  var sel = document.getElementById('planSelect');
+  if (!sel) return;
+  var value = String(plan.monthlyUsd);
+  var found = false;
+  for (var i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === value) { sel.selectedIndex = i; found = true; break; }
+  }
+  if (!found) {
+    sel.value = 'custom';
+    var ci = document.getElementById('customPlan');
+    if (ci) { ci.style.display = 'inline-block'; ci.value = value; }
+  }
+}
+
 // Theme toggle
 function toggleTheme() {
   const html = document.documentElement;
@@ -1660,6 +1684,7 @@ async function refreshData() {
 }
 
 function render() {
+  applyDetectedPlan(DATA && DATA.plan);
   document.getElementById('loading').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   renderWarnings();

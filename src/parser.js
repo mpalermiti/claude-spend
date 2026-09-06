@@ -4,6 +4,7 @@ const os = require('os');
 const readline = require('readline');
 
 const { costForUsage } = require('./pricing');
+const { detectPlan } = require('./plan');
 
 // Claude Code's own override (CLAUDE_CONFIG_DIR) wins; default ~/.claude.
 function getClaudeDir() {
@@ -141,11 +142,11 @@ async function parseAllSessions({ from, to } = {}) {
   const warnings = [];
 
   if (!fs.existsSync(claudeDir)) {
-    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {}, warnings: [{ type: 'missing-dir', message: 'Claude Code data directory not found at ' + claudeDir + '. Have you used Claude Code yet?' }] };
+    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {}, plan: detectPlan(), warnings: [{ type: 'missing-dir', message: 'Claude Code data directory not found at ' + claudeDir + '. Have you used Claude Code yet?' }] };
   }
 
   if (!fs.existsSync(projectsDir)) {
-    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {}, warnings: [{ type: 'no-projects', message: 'No project data found. Start a Claude Code conversation to generate usage data.' }] };
+    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {}, plan: detectPlan(), warnings: [{ type: 'no-projects', message: 'No project data found. Start a Claude Code conversation to generate usage data.' }] };
   }
 
   // Read history.jsonl for prompt display text
@@ -507,6 +508,7 @@ async function parseAllSessions({ from, to } = {}) {
     insights,
     warnings,
     trend,
+    plan: detectPlan(),
   };
 }
 
