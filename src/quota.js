@@ -6,7 +6,7 @@
 // failure returns null and the caller falls back to token-based estimates.
 //
 // The OAuth token comes from the macOS login keychain (where Claude Code stores
-// it) or ~/.claude/.credentials.json on other platforms. It is never logged.
+// it) and/or ~/.claude/.credentials.json — whichever copy is still live. It is never logged.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -19,26 +19,45 @@ function claudeDir() {
   return process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
 }
 
-function readOAuthToken() {
-  if (process.platform === 'darwin') {
-    try {
-      const raw = execFileSync('security', ['find-generic-password', '-s', KEYCHAIN_SERVICE, '-w'], {
-        encoding: 'utf8',
-        timeout: 8000,
-        stdio: ['ignore', 'pipe', 'ignore'],
-      });
-      const token = JSON.parse(raw).claudeAiOauth?.accessToken;
-      if (token) return token;
-    } catch {
-      // keychain locked, item missing, or prompt declined — fall through
-    }
-  }
+function keychainCredential() {
+  if (process.platform !== 'darwin') return null;
   try {
-    const creds = JSON.parse(fs.readFileSync(path.join(claudeDir(), '.credentials.json'), 'utf8'));
-    return creds.claudeAiOauth?.accessToken || null;
+    const raw = execFileSync('security', ['find-generic-password', '-s', KEYCHAIN_SERVICE, '-w'], {
+      encoding: 'utf8',
+      timeout: 8000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return JSON.parse(raw).claudeAiOauth || null;
+  } catch {
+    return null;   // keychain locked, item missing, or prompt declined
+  }
+}
+
+function fileCredential() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(claudeDir(), '.credentials.json'), 'utf8')).claudeAiOauth || null;
   } catch {
     return null;
   }
+}
+
+// Claude Code keeps credentials in two places on macOS — the login keychain and
+// ~/.claude/.credentials.json — and they drift: a refresh can land in the file while the
+// keychain copy stays frozen on the token it last wrote. Preferring the keychain and trusting
+// it blindly is how a background reader served an expired token for ten hours. So read both
+// and take the one that is still live (the later expiry wins; a credential with no expiry is
+// taken at its word). If every copy is expired, the freshest is still the best guess.
+function pickCredential(creds, now = Date.now()) {
+  const usable = creds.filter((c) => c && c.accessToken);
+  if (!usable.length) return null;
+  const expiry = (c) => (c.expiresAt == null ? Infinity : c.expiresAt);
+  const live = usable.filter((c) => expiry(c) > now);
+  return (live.length ? live : usable).sort((a, b) => expiry(b) - expiry(a))[0];
+}
+
+function readOAuthToken({ creds = [keychainCredential(), fileCredential()], now = Date.now() } = {}) {
+  const chosen = pickCredential(creds, now);
+  return chosen ? chosen.accessToken : null;
 }
 
 function parseQuota(payload) {
@@ -83,4 +102,4 @@ function formatQuota(q) {
   return parts.join(' · ') || 'quota unavailable';
 }
 
-module.exports = { fetchQuota, parseQuota, readOAuthToken, formatQuota, USAGE_URL };
+module.exports = { fetchQuota, parseQuota, readOAuthToken, pickCredential, formatQuota, USAGE_URL };
