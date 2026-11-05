@@ -114,7 +114,7 @@ claude-spend --quota                                            # "session 58% �
 
 Claude Code writes JSONL session files to `~/.claude/projects/`. This tool parses them, calculates API-equivalent costs per model (with cache write/read pricing), aggregates by day/model/project, and generates insights. The cost numbers represent what the usage would cost at API rates — not what you pay on a subscription. That gap is your ROI.
 
-**Accuracy notes (3.1):** Claude Code writes one JSONL line per content block and repeats the usage on each, so responses are deduped by message id. Transcripts nested under `<session>/subagents/**` (including workflow agents) are read and attributed to their parent. Pricing covers the Claude 5 family (Opus 5, Sonnet 5, Fable 5.1) and prices 1-hour cache writes at 2× input, which is what Claude Code uses. Set `CLAUDE_CONFIG_DIR` to point at a different data dir.
+**Accuracy notes (3.1):** Claude Code writes one JSONL line per content block and repeats the usage on each, so responses are deduped by message id. Transcripts nested under `<session>/subagents/**` (including workflow agents) are read and attributed to their parent. Pricing covers the Claude 5 family (Opus 5.5, Opus 5, Sonnet 5.5, Sonnet 5, Haiku 5.5, Fable 5.1) and prices 1-hour cache writes at 2× input, which is what Claude Code uses. Set `CLAUDE_CONFIG_DIR` to point at a different data dir.
 
 ## Origin
 
