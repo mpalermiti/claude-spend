@@ -3,6 +3,10 @@ const { parseModel, getPricing, costForUsage } = require('../src/pricing');
 describe('parseModel', () => {
   test.each([
     ['claude-opus-5', 'opus', 5],
+    ['claude-opus-5-5', 'opus', 5.5],
+    ['claude-opus-5-5[1m]', 'opus', 5.5],
+    ['claude-sonnet-5-5', 'sonnet', 5.5],
+    ['claude-haiku-5-5', 'haiku', 5.5],
     ['claude-opus-5[1m]', 'opus', 5],
     ['claude-fable-5-1', 'fable', 5.1],
     ['claude-opus-4-8', 'opus', 4.8],
@@ -27,6 +31,14 @@ describe('getPricing tiers ($/MTok)', () => {
   test('opus 5 is $5/$25', () => {
     expect(mtok(getPricing('claude-opus-5'))).toEqual({ input: 5, output: 25, cacheRead: 0.5 });
   });
+  test('opus 5.5 is $4/$20 with $0.20 cache reads, with or without the 1M suffix', () => {
+    for (const id of ['claude-opus-5-5', 'claude-opus-5-5[1m]']) {
+      const p = mtok(getPricing(id));
+      expect(p.input).toBeCloseTo(4, 9);
+      expect(p.output).toBeCloseTo(20, 9);
+      expect(p.cacheRead).toBeCloseTo(0.2, 9);
+    }
+  });
   test('opus 4.7 and 4.8 share the opus-5 tier', () => {
     expect(getPricing('claude-opus-4-7').tier).toBe('opus-5');
     expect(getPricing('claude-opus-4-8').tier).toBe('opus-5');
@@ -44,6 +56,19 @@ describe('getPricing tiers ($/MTok)', () => {
     expect(mtok(getPricing('claude-sonnet-5')).input).toBe(2);
     expect(mtok(getPricing('claude-sonnet-4-6')).input).toBe(3);
   });
+  test('sonnet 5.5 is $2/$10 with $0.10 cache reads; sonnet 5 keeps $0.20', () => {
+    const p = mtok(getPricing('claude-sonnet-5-5'));
+    expect(p.input).toBeCloseTo(2, 9);
+    expect(p.output).toBeCloseTo(10, 9);
+    expect(p.cacheRead).toBeCloseTo(0.1, 9);
+    expect(mtok(getPricing('claude-sonnet-5')).cacheRead).toBeCloseTo(0.2, 9);
+  });
+  test('haiku 5.5 is $0.10/$0.50 with $0.01 cache reads', () => {
+    const p = mtok(getPricing('claude-haiku-5-5'));
+    expect(p.input).toBeCloseTo(0.1, 9);
+    expect(p.output).toBeCloseTo(0.5, 9);
+    expect(p.cacheRead).toBeCloseTo(0.01, 9);
+  });
   test('haiku 4.5 is $1/$5', () => {
     expect(mtok(getPricing('claude-haiku-4-5')).output).toBe(5);
   });
@@ -58,6 +83,26 @@ describe('getPricing tiers ($/MTok)', () => {
 });
 
 describe('costForUsage', () => {
+  test('opus 5.5 writes: 5m is $5/MTok, 1h is $8/MTok', () => {
+    const usage = (m5, h1) => ({ cache_creation: { ephemeral_5m_input_tokens: m5, ephemeral_1h_input_tokens: h1 } });
+    expect(costForUsage('claude-opus-5-5', usage(1_000_000, 0)).cost).toBeCloseTo(5, 6);
+    expect(costForUsage('claude-opus-5-5', usage(0, 1_000_000)).cost).toBeCloseTo(8, 6);
+  });
+  test('haiku 5.5 prompts up to 100,000 tokens pay the base card', () => {
+    const { cost } = costForUsage('claude-haiku-5-5', { input_tokens: 100_000, output_tokens: 1_000_000 });
+    expect(cost).toBeCloseTo(0.01 + 0.5, 6);
+  });
+  test('haiku 5.5 over 100,000 prompt tokens pays the long card on every token', () => {
+    const { cost } = costForUsage('claude-haiku-5-5', { input_tokens: 100_001, output_tokens: 1_000_000 });
+    expect(cost).toBeCloseTo(100_001 * 0.5 / 1e6 + 2.5, 6);
+  });
+  test('cache reads and writes count toward the haiku 5.5 threshold', () => {
+    const { cost } = costForUsage('claude-haiku-5-5', {
+      input_tokens: 1, cache_read_input_tokens: 60_000,
+      cache_creation: { ephemeral_5m_input_tokens: 40_000, ephemeral_1h_input_tokens: 0 },
+    });
+    expect(cost).toBeCloseTo(0.5e-6 + 60_000 * 0.05 / 1e6 + 40_000 * 0.625 / 1e6, 9);
+  });
   test('splits 1h and 5m cache writes', () => {
     const { cost, cacheCreationTokens } = costForUsage('claude-opus-5', {
       input_tokens: 1_000_000,

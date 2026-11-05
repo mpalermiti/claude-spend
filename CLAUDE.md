@@ -24,7 +24,7 @@ src/
 
 - **Dedupe**: Claude Code writes one JSONL line per content block, repeating `message.id` + `usage`. `extractSessionData` counts each id once and merges tool names across its blocks.
 - **Enumeration**: `listTranscripts()` reads `<session>.jsonl` plus everything under `<session>/subagents/**` (workflow agents nest at `subagents/workflows/<wf>/agent-*.jsonl`). Sessions carry `parentSessionId`, `agentId`, `isSubagent`, `cwd`.
-- **Pricing**: `pricing.js` parses the version out of any model id form (`claude-opus-4-8`, `claude-3-5-haiku-20241022`, `claude-opus-5[1m]`) and maps to a tier. Opus ≥4.5 = $5/$25; Fable 5.1 cache reads $0.25/MTok; 1h cache writes 2× input.
+- **Pricing**: `pricing.js` parses the version out of any model id form (`claude-opus-4-8`, `claude-3-5-haiku-20241022`, `claude-opus-5[1m]`) and maps to a tier. Opus 5.5 = $4/$20 with $0.20 cache reads; Opus 4.5–5 = $5/$25; Sonnet 5.5 cache reads $0.10; Fable 5.1 cache reads $0.25; Haiku 5.5 = $0.10/$0.50, 5× on prompts over 100K tokens; 1h cache writes 2× input.
 - **Plan**: `plan.js` reads the tier from `.claude.json`; `/api/data` returns it as `plan` and the dashboard uses it as the ROI default unless localStorage has a choice.
 - **Quota**: `quota.js` never throws — null on any failure. Token from the macOS keychain (`Claude Code-credentials`) or `.credentials.json`; never logged.
 - **Report**: `buildReport({ sessions, project, from, to, trendDays, quota, quotaBefore })` → `renderMarkdown()`. Labels are `label:id`, split on the last colon.
