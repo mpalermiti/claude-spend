@@ -62,7 +62,7 @@ node src/index.js --mcp              # Start as MCP server (stdio)
 node src/index.js --report --project construct --trend-days 7   # markdown spend report
 node src/index.js --report --sessions job#1:<uuid> --json       # per-session rows, machine-readable
 node src/index.js --quota            # subscription window utilization
-npm test                             # Jest tests (62 tests across 12 suites; server tests bind a port)
+npm test                             # Jest tests (server tests bind a port)
 ```
 
 ## Testing
